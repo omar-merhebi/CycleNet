@@ -1,0 +1,13 @@
+*.png
+*.tif
+.gitkeep
+__pycache__
+__pycache__/
+.gitkeep
+*.pkl
+*.log
+slurm_scripts/*
+data/*
+oem.code-workspace
+wandb/
+saved_models/

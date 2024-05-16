@@ -1,0 +1,27 @@
+defaults:
+  - dataset: phaser_rpe
+
+mode: train
+hyperparamter_sweep: true
+random_seed: 416
+
+wandb:
+  project: phaser
+  name: rotation_cnn_defaults
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+  job_logging:
+    formatters:
+      simple:
+        format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: simple
+        stream: ext://sys.stdout
+    root:
+      level: CRITICAL
+      handlers: [console]

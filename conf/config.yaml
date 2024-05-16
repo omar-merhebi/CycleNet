@@ -2,7 +2,6 @@ defaults:
   - dataset: phaser_rpe
 
 mode: train
-hyperparamter_sweep: false
 random_seed: 416
 
 wandb:

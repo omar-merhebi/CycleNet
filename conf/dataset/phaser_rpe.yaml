@@ -1,6 +1,8 @@
+name: phaser_rpe
+
 raw_data: data/phaser_rpe/raw/images
-masks: data/phaser_rpe/raw/masks
 labels: data/phaser_rpe/labels.csv
+channel_annotations: data/phaser_rpe/annotations.csv
 output_dir: data/phaser_rpe/results
 
 use_masks: true

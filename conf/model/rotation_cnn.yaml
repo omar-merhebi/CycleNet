@@ -1,0 +1,17 @@
+name: rotation_cnn
+save_path: saved_models/rotation_cnn/
+
+# Ignored if mode = sweep
+train:  
+  optim: adam
+  batch_size: 10
+  epochs: 20
+  pooling: avg
+  dropout: 0.5
+  init_kernel_size: 7
+  init_filters: 55
+  init_dense: 128
+  padding: same
+  activation: relu
+  final_activation: softmax
+  initializer: he_normal

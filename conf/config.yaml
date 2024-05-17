@@ -1,12 +1,19 @@
 defaults:
   - dataset: phaser_rpe
+  - mode: train
+  - model: rotation_cnn
+  - _self_
 
-mode: train
 random_seed: 416
 
 wandb:
-  project: phaser
-  name: rotation_cnn_defaults
+  project: PHASER
+  group: ${model.name}_${mode.name}
+  name: default_run
+  tags:
+    - ${model.name}
+    - ${mode.name}
+    - ${dataset.name}
 
 hydra:
   run:

@@ -8,11 +8,11 @@ from pprint import pprint as pprint
 
 from src import helpers as hlp
 
-PROJECT_PATH = Path(os.paath.dirname(os.path.realpath(__file__)))
+PROJECT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 
 @hydra.main(config_path="conf/", config_name="config")
 def main(cfg: DictConfig):
-    pass
+    pprint(OmegaConf.to_container(cfg, resolve=True))
 
 if __name__ == "__main__":
     main()

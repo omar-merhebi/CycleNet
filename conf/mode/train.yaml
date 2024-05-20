@@ -6,3 +6,7 @@ early_stopping:
   stopping_metric: val_loss
   stopping_mode: min
   
+splits:
+  train: 0.8
+  val: 0.1
+  test: 0.1

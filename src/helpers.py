@@ -3,11 +3,23 @@ import os
 import pandas as pd
 import torch
 
+from collections.abc import Mapping
 from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
 from typing import Union
 
+CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
+
+PROJECT_PATH = CURRENT_PATH.parent
+
 def get_resource_allocation():
+    """
+    Get the resource allocation for the current environment.
+    Returns:
+        cpus (int): The number of CPUs available
+        gpus (int): The number of GPUs available
+        total_mem (int): The total memory available in MB
+    """
     is_slurm = _determine_slurm()
     
     if is_slurm:
@@ -70,6 +82,9 @@ def check_config(cfg: DictConfig):
     if not cfg.dataset:
         raise ValueError('No dataset configuration found.')
     
+    if not cfg.dataset.data_dir:
+        raise ValueError('No data directory found.')
+    
     if not cfg.mode:
         raise ValueError('No mode configuration found.')
     
@@ -88,3 +103,46 @@ def check_config(cfg: DictConfig):
         
     if total_split != 1:
         raise ValueError('Split values must sum to 1.')
+    
+    
+def convert_paths(cfg: DictConfig):
+    if isinstance(cfg, Mapping):
+        for key, value in cfg.items():
+            if isinstance(value, str):
+                cfg[key] = _to_posix(value)
+                
+            elif isinstance(value, list):
+                cfg[key] = [_to_posix(v) if isinstance(v, str) and ('/' in v or '\\' in v) else v for v in value]
+                
+            else: 
+                convert_paths(value)
+                
+    elif isinstance(cfg, list):
+        for i, value in enumerate(cfg):
+            if isinstance(value, str):
+                if '/' in value or '\\' in value:
+                    cfg[i] = _to_posix(value)
+                
+            elif isinstance(value, Mapping):
+                cfg[i] = _to_posix(value)
+                
+    return cfg
+
+                
+def _to_posix(path: Union[str, Path], project_path: Path = PROJECT_PATH):
+    """_summary_
+
+    Args:
+        path (Union[str, Path]): _description_
+        project_path (Path, optional): _description_. Defaults to PROJECT_PATH.
+    """
+    
+    if '/' in path or '\\' in path:
+        new_path = Path(path)
+        
+        if not new_path.is_absolute() and '~' not in path:
+            new_path = project_path / new_path
+            
+        return new_path
+    
+    return path

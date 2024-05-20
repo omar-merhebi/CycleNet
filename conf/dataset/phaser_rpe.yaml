@@ -11,4 +11,4 @@ shuffle: true
 balancing: up
 
 channel_selection: null
-model: rotation_cnn
+include_M: false

@@ -1,6 +1,6 @@
-name: phaser_rpe
+name: wayne_rpe
 
-raw_data: data/phaser_rpe/raw/images
+data_dir: data/phaser_rpe/raw/images
 labels: data/phaser_rpe/labels.csv
 channel_annotations: data/phaser_rpe/annotations.csv
 output_dir: data/phaser_rpe/results

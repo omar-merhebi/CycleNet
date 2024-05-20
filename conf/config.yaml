@@ -1,5 +1,5 @@
 defaults:
-  - dataset: phaser_rpe
+  - dataset: wayne_rpe
   - mode: train
   - model: rotation_cnn
   - _self_

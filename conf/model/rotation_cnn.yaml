@@ -15,3 +15,6 @@ train:
   activation: relu
   final_activation: softmax
   initializer: he_normal
+
+sweep:
+  test: null

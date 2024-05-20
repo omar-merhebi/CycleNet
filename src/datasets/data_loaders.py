@@ -23,3 +23,8 @@ class RPEDataset(Dataset):
         
         self.cfg = cfg
         
+    def __len__(self):
+        pass
+    
+    def __getitem__(self, idx):
+        pass

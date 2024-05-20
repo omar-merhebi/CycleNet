@@ -1,7 +1,9 @@
 import hydra
 import os
+import pandas as pd
 import torch
 
+from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
 from typing import Union
 
@@ -32,3 +34,57 @@ def _determine_slurm():
     Determines if the current environment is a SLURM environment.
     """
     return os.environ.get('SLURM_JOB_ID') is not None
+
+
+def _resample(data: Union[pd.DataFrame, pd.Series], target: int):
+    """
+    Resample the data to the target number of samples.
+    
+    Args:
+        data (Union[pd.DataFrame, pd.Series]): The data to resample
+        target (int): The target number of samples
+    
+    Returns:
+        pd.DataFrame: The resampled data
+    """
+    
+    if len(data) > target:
+        return data.sample(n=target, replace=False)
+    
+    if len(data) < target:
+        return data.sample(n=target, replace=True)
+    
+    return data
+
+
+def check_config(cfg: DictConfig):
+    """
+    Check the configuration object for any missing or invalid values.
+    
+    Args:
+        cfg (DictConfig): The configuration object
+    """
+    
+    split_names = ['train', 'val', 'test']
+    
+    if not cfg.dataset:
+        raise ValueError('No dataset configuration found.')
+    
+    if not cfg.mode:
+        raise ValueError('No mode configuration found.')
+    
+    if not cfg.mode.splits:
+        raise ValueError('No splits configuration found.')
+    
+    total_split = 0
+    for (k,v) in cfg.mode.splits.items():
+        if not v:
+            raise ValueError(f'No value found for split {k}.')
+        
+        if k not in split_names:
+            raise ValueError(f'Invalid split name: {k}. Must be one of: {split_names}.')
+        
+        total_split += v
+        
+    if total_split != 1:
+        raise ValueError('Split values must sum to 1.')

@@ -1,7 +1,7 @@
 import hydra
 import numpy as np
 import os
-import pandas
+import pandas as pd
 import pickle
 import re
 
@@ -12,6 +12,8 @@ from scipy import ndimage
 from torch.utils.data import Dataset, DataLoader
 from typing import Union
 
+from . import helpers as hlp
+
 class RPEDataset(Dataset):
     """ RPE Dataset class """
     
@@ -20,8 +22,6 @@ class RPEDataset(Dataset):
         Args:
             cfg (DictConfig): Hydra configuration object
         """
-        
-        self.cfg = cfg
         
     def __len__(self):
         pass

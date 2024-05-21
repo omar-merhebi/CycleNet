@@ -9,11 +9,8 @@ random_seed: 416
 wandb:
   project: PHASER
   group: ${model.name}_${mode.name}
-  name: default_run
-  tags:
-    - ${model.name}
-    - ${mode.name}
-    - ${dataset.name}
+  run_name: default_run
+  tags: null
 
 hydra:
   run:

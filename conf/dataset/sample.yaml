@@ -1,8 +1,0 @@
-## This is a sample configuration file for a dataset. 
-## At minimum, it should contain the following keys:
-
-name: dataset_name
-
-data_dir: path/to/data # Path to the directory containing the raw images (.tiff files)
-labels: path/to/labels # Path to the CSV file containing the labels
-output_dir: path/to/results # Path to the directory where the results will be saved

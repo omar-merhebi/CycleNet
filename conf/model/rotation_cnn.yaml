@@ -1,9 +1,10 @@
 name: rotation_cnn
 save_path: saved_models/rotation_cnn/
 
-# Ignored if mode = sweep
+# Ignored if mode != train
 train:  
   optim: adam
+  lr: 0.001
   batch_size: 10
   epochs: 20
   pooling: avg
@@ -16,5 +17,6 @@ train:
   final_activation: softmax
   initializer: he_normal
 
+# Ignored if mode != sweep
 sweep:
   test: null

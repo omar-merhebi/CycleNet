@@ -5,10 +5,11 @@ labels: data/phaser_rpe/labels.csv
 channel_annotations: data/phaser_rpe/annotations.csv
 output_dir: data/phaser_rpe/results
 
-use_masks: true
+use_masks: nuc # nuc, cyto, both, or null (null = no mask applied)
 augmentation: true
 shuffle: true
 balancing: up
 
-channel_selection: null
-include_M: false
+# list or range of channels to use, e.g. [0, 1, 2] (min = 0, max = 56)
+# check annotations.csv for a list of channels
+use_channels: null 

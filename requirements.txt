@@ -64,6 +64,7 @@ smmap==5.0.1
 sweeps==0.2.0
 sympy==1.12
 threadpoolctl==3.5.0
+tifffile==2024.5.10
 torch==2.3.0
 torchaudio==2.3.0
 torchvision==0.18.0

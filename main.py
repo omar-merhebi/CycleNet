@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pandas as pd
 import torch
+import wandb
 
 from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
@@ -23,7 +24,6 @@ def main(cfg: DictConfig):
     cfg_dict = OmegaConf.to_container(cfg, resolve=True)
     
     cpus, gpus, total_mem = hlp.get_resource_allocation()
-    np.random.seed(cfg.random_seed)
     
     if not torch.cuda.is_available() or gpus == 0:
         raise RuntimeError('No GPUs available. Aborting...')
@@ -42,7 +42,16 @@ def main(cfg: DictConfig):
     print('\nLoaded Configuration:')
     pprint(cfg_dict)
     
-    print(cfg.mode.splits)
+    model_cfg = OmegaConf.to_container(cfg.model)
+    
+    # wandb.init(project=cfg.wandb.project,
+    #            group=cfg.wandb.group,
+    #            name=cfg.wandb.run_name,
+    #            tags=cfg.wandb.tags if cfg.wandb.tags else None,
+    #            config=model_cfg[f'{cfg.mode.name}'])
+    
+    if cfg.mode.name == 'train':
+        hlp.train(cfg)
 
 if __name__ == "__main__":
     main()

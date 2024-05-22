@@ -8,48 +8,11 @@ from datetime import date
 from collections.abc import Mapping
 from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
-from sklearn.model_selection import train_test_split
 from typing import Union
-
-from .datasets import *
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
 TODAY = date.today().strftime('%Y-%m-%d')
-
-def train(cfg):
-    model_save_path = f'{Path(cfg.model.save_path) / TODAY}'
-    
-    train_idx, val_idx, test_idx = _create_splits(cfg.dataset.labels, cfg.mode.splits, cfg.random_seed)
-    
-    train_dataset = WayneRPEDataset(cfg, train_idx)
-    ic(train_dataset.__getitem__(0))
-
-def _create_splits(labels: Union[str, Path], 
-                   splits: DictConfig, random_seed: int) -> np.ndarray:
-    """
-    Create the train, validation, and test splits for the dataset.
-    Args:
-        labels (Union[str, Path]): Path to the labels CSV file
-        splits (DictConfig): The split configuration
-        random_seed (int): The random seed to use for reproducibility
-
-    Returns:
-        np.ndarray: The indices for the train, validation, and test splits
-    """
-    
-    labels = pd.read_csv(labels)
-    
-    train_idx, test_idx = train_test_split(np.arange(len(labels)),
-                                        train_size=splits.train,
-                                        random_state=random_seed)
-    
-    test_idx, val_idx = train_test_split(test_idx,
-                                        train_size=splits.val / (splits.val + splits.test),
-                                        random_state=random_seed)
-    
-    return train_idx, val_idx, test_idx
-    
 
 
 def get_resource_allocation():

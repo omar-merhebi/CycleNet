@@ -10,6 +10,7 @@ augmentation: true
 shuffle: true
 balancing: up
 
-# list or range of channels to use, e.g. [0, 1, 2] (min = 0, max = 56)
+# list of channels to use (e.g. pRB, DNA1)
 # check annotations.csv for a list of channels
-use_channels: null 
+# If null, uses the first 55 channels (up to pp65)
+use_channels: null

@@ -38,8 +38,7 @@ def train(cfg: DictConfig) -> None:
     test_dataset = DATASETS[cfg.dataset.name](cfg, test_idx)
     
     device = torch.device('cuda')
-    ic(train_dataset.__getitem__(0))
-    
+    ic(train_dataset.__getitem__(0)[0].shape)
 
 def check_leakage(train_idx: np.ndarray, test_idx: np.ndarray, 
                   val_idx: np.ndarray) -> None:

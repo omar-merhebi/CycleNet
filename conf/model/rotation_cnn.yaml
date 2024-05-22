@@ -1,5 +1,6 @@
 name: rotation_cnn
 save_path: saved_models/rotation_cnn/
+predict: phase # phase, age, or both (if null, predict both)
 
 # Ignored if mode != train
 train:  

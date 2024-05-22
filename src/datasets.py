@@ -20,8 +20,9 @@ class WayneRPEDataset(Dataset):
         self.channel_annotations = pd.read_csv(cfg.dataset.channel_annotations)
         self.channel_annotations['feature'] = self.channel_annotations['feature'].apply(lambda x: x.lower().strip())
         
-        self.use_channels = cfg.dataset.use_channels
-        self.use_channels = [channel.lower().strip() for channel in self.use_channels]
+        self.use_channels = [channel.lower().strip() for channel in self.cfg.dataset.use_channels] if self.cfg.dataset.use_channels else None
+        self.input_channels = len(self.use_channels) if self.use_channels else 55
+        ic(self.input_channels)
         
         self.labels = pd.read_csv(cfg.dataset.labels)
         self.labels['phase_index'], unique_phases = pd.factorize(self.labels['pred_phase'])
@@ -81,7 +82,9 @@ class WayneRPEDataset(Dataset):
                                 
         if self.cfg.dataset.use_channels:
             channel_idx = list(set(self.channel_annotations[self.channel_annotations['feature'].isin(self.use_channels)]['frame'].tolist()))
-            ic(channel_idx)
+            
+            assert len(channel_idx) == self.input_channels, f''
+            
             tiff_tensor_filtered = tiff_tensor[channel_idx]
             
             # Double-check proper slicing (probably not needed in production code)
@@ -100,6 +103,10 @@ class WayneRPEDataset(Dataset):
             return tiff_tensor, self.labels.iloc[idx]['age']
         
         return tiff_tensor, self.labels.iloc[idx]['phase_index'], self.labels.iloc[idx]['age']
+    
+    def augmentations(self, image: torch.Tensor):
+        """TODO: Implement augmentations"""
+        pass
         
         
 def _resample(data: Union[pd.DataFrame, pd.Series], target: int):

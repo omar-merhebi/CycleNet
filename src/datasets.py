@@ -15,7 +15,17 @@ class WayneRPEDataset(Dataset):
     def __init__(self, cfg: DictConfig, data_idx: np.ndarray):
         self.cfg = cfg
         self.data_idx = data_idx
+        self.prediction = cfg.model.predict.lower() if cfg.model.predict else 'both'
+        
+        self.channel_annotations = pd.read_csv(cfg.dataset.channel_annotations)
+        self.channel_annotations['feature'] = self.channel_annotations['feature'].apply(lambda x: x.lower().strip())
+        
+        self.use_channels = cfg.dataset.use_channels
+        self.use_channels = [channel.lower().strip() for channel in self.use_channels]
+        
         self.labels = pd.read_csv(cfg.dataset.labels)
+        self.labels['phase_index'], unique_phases = pd.factorize(self.labels['pred_phase'])
+        self.labels = self.labels.iloc[self.data_idx].reset_index(drop=True)
         
         if self.cfg.dataset.balancing:
             balancing = self.cfg.dataset.balancing.lower()
@@ -41,7 +51,7 @@ class WayneRPEDataset(Dataset):
         return len(self.labels)
     
     def __getitem__(self, idx):
-        filepath = self.cfg.dataset.data_dir / f'{self.labels["cell_id"][idx]}.tif'
+        filepath = self.cfg.dataset.data_dir / f'{self.labels.iloc[idx]["cell_id"]}.tif'
         tiff_stack = tiff.imread(filepath)
         tiff_tensor = torch.tensor(tiff_stack)
         
@@ -70,12 +80,26 @@ class WayneRPEDataset(Dataset):
                 tiff_tensor = tiff_tensor * masks_centered[2]
                                 
         if self.cfg.dataset.use_channels:
-            pass
+            channel_idx = list(set(self.channel_annotations[self.channel_annotations['feature'].isin(self.use_channels)]['frame'].tolist()))
+            ic(channel_idx)
+            tiff_tensor_filtered = tiff_tensor[channel_idx]
+            
+            # Double-check proper slicing (probably not needed in production code)
+            for c, channel in enumerate(channel_idx):
+                assert torch.equal(tiff_tensor_filtered[c], tiff_tensor[channel])
+                
+            tiff_tensor = tiff_tensor_filtered
         
         else:
             tiff_tensor = tiff_tensor[:55]
         
-        return tiff_tensor
+        if self.prediction == 'phase':
+            return tiff_tensor, self.labels.iloc[idx]['phase_index']
+        
+        if self.prediction == 'age':
+            return tiff_tensor, self.labels.iloc[idx]['age']
+        
+        return tiff_tensor, self.labels.iloc[idx]['phase_index'], self.labels.iloc[idx]['age']
         
         
 def _resample(data: Union[pd.DataFrame, pd.Series], target: int):
@@ -111,5 +135,5 @@ def _find_center_mask(mask: Union[torch.Tensor, np.ndarray]):
     return torch.tensor(center_mask)
 
 
-def _normalize_image(image):
-    return torch.tensor(image / 255)
+def _normalize_image(image: torch.Tensor) -> torch.Tensor:
+    return image / 255

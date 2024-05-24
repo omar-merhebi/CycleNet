@@ -1,5 +1,6 @@
-import hashlib
 import os
+import numpy as np
+import pandas as pd
 import torch
 
 from datetime import date
@@ -10,7 +11,7 @@ from sklearn.model_selection._split import train_test_split
 from torch.utils.data import DataLoader
 from typing import Union
 
-from .datasets import *
+from .datasets import WayneRPEDataset
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
@@ -33,12 +34,11 @@ def train(cfg: DictConfig) -> None:
     check_leakage(train_idx, val_idx, test_idx)
     print('No leakage detected between splits.')
     
-    train_dataset = DATASETS[cfg.dataset.name](cfg, train_idx)
-    val_dataset = DATASETS[cfg.dataset.name](cfg, val_idx)
-    test_dataset = DATASETS[cfg.dataset.name](cfg, test_idx)
+    train_dataset = DATASETS[cfg.dataset.name](cfg, train_idx, augment=cfg.dataset.augment)
+    val_dataset = DATASETS[cfg.dataset.name](cfg, val_idx, augment=cfg.dataset.augment)
+    test_dataset = DATASETS[cfg.dataset.name](cfg, test_idx, augment=False)
     
     device = torch.device('cuda')
-    ic(train_dataset.__getitem__(0)[0].shape)
 
 def check_leakage(train_idx: np.ndarray, test_idx: np.ndarray, 
                   val_idx: np.ndarray) -> None:

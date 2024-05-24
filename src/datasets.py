@@ -8,21 +8,22 @@ import torch
 from collections import Counter
 from icecream import ic
 from omegaconf import DictConfig
+from random import randint
 from torch.utils.data import Dataset
+from torchvision import transforms
 from typing import Union
 
 class WayneRPEDataset(Dataset):
-    def __init__(self, cfg: DictConfig, data_idx: np.ndarray):
+    def __init__(self, cfg: DictConfig, data_idx: np.ndarray, augment: bool = False):
         self.cfg = cfg
         self.data_idx = data_idx
-        self.prediction = cfg.model.predict.lower() if cfg.model.predict else 'both'
+        self.augment = augment
         
         self.channel_annotations = pd.read_csv(cfg.dataset.channel_annotations)
         self.channel_annotations['feature'] = self.channel_annotations['feature'].apply(lambda x: x.lower().strip())
         
         self.use_channels = [channel.lower().strip() for channel in self.cfg.dataset.use_channels] if self.cfg.dataset.use_channels else None
         self.input_channels = len(self.use_channels) if self.use_channels else 55
-        ic(self.input_channels)
         
         self.labels = pd.read_csv(cfg.dataset.labels)
         self.labels['phase_index'], unique_phases = pd.factorize(self.labels['pred_phase'])
@@ -53,60 +54,114 @@ class WayneRPEDataset(Dataset):
     
     def __getitem__(self, idx):
         filepath = self.cfg.dataset.data_dir / f'{self.labels.iloc[idx]["cell_id"]}.tif'
-        tiff_stack = tiff.imread(filepath)
-        tiff_tensor = torch.tensor(tiff_stack)
+        image = tiff.imread(filepath)
+        image = torch.tensor(image, dtype=torch.float32)
         
-        # Take out non-nucleous or -ring masks
-        tiff_tensor = torch.cat((tiff_tensor[:55], tiff_tensor[57:]), dim=0)
-        tiff_tensor = _normalize_image(tiff_tensor)
+        image = _normalize_image(image)
+    
+        # We extract and center masks even if we don't use them in the model
+        nuc = image[57].bool()
+        ring = image[58].bool()
+        combined = torch.logical_or(nuc, ring)
+
+        orig_masks = [nuc, ring, combined]
+
+        centered_masks = [_find_center_mask(mask) for mask in orig_masks]
+        all_masks = orig_masks + centered_masks
+        masks_to_add = tuple(mask.unsqueeze(0) for mask in all_masks[2:])
+        image = torch.cat((image, *masks_to_add), dim=0)
+        
+        if self.augment:
+            image = self.augmentations(image)
+            
+        original_image = image.clone()
         
         if self.cfg.dataset.use_masks:
             use_masks = self.cfg.dataset.use_masks
-            nuc_mask = tiff_tensor[55].bool()
-            ring_mask = tiff_tensor[56].bool()
-            combined_mask = torch.logical_or(nuc_mask, ring_mask)
-            
-            masks = [nuc_mask, ring_mask, combined_mask]
-            
-            # Find the mask closest to the center of the image
-            masks_centered = [_find_center_mask(mask) for mask in masks]
             
             if 'nuc' in use_masks:
-                tiff_tensor = tiff_tensor * masks_centered[0]
+                image = image[60] * image
                 
-            elif 'ring' in use_masks:
-                tiff_tensor = tiff_tensor * masks_centered[1]
+            if 'ring' in use_masks:
+                image = image[61] * image
                 
-            elif 'both' in use_masks or 'combined' in use_masks:
-                tiff_tensor = tiff_tensor * masks_centered[2]
-                                
+            else:
+                image = image[62] * image
+                
+        if self.cfg.dataset.fill.enabled:
+            if self.cfg.dataset.fill.fill_cell:
+                exclude = ~(original_image[59] != original_image[62])
+                image = image * exclude
+            
+            mask = ~original_image[59].bool() # invert the mask
+            sample_from = original_image * mask
+            sample_vals = [sample_from[z][sample_from[z] != 0].flatten() for z in range(sample_from.shape[0])]
+            zero_indices = (image == 0)
+            
+            for z in range(image.shape[0] - 6):
+                zero_idx = torch.nonzero(zero_indices[z], as_tuple=True)
+                random_vals = sample_vals[z][torch.randint(0, sample_vals[z].size(0), (zero_idx[0].numel(), ))]
+                
+                image[z][zero_idx] = random_vals
+                
+                     
         if self.cfg.dataset.use_channels:
             channel_idx = list(set(self.channel_annotations[self.channel_annotations['feature'].isin(self.use_channels)]['frame'].tolist()))
             
-            assert len(channel_idx) == self.input_channels, f''
+            assert len(channel_idx) == self.input_channels, f'The names of one or more channels provided in the configuration file do not match those found in the channel annotations file: {self.cfg.dataset.channel_annotations}'
             
-            tiff_tensor_filtered = tiff_tensor[channel_idx]
+            image_filtered = image[channel_idx]
             
             # Double-check proper slicing (probably not needed in production code)
             for c, channel in enumerate(channel_idx):
-                assert torch.equal(tiff_tensor_filtered[c], tiff_tensor[channel])
+                assert torch.equal(image_filtered[c], image[channel])
                 
-            tiff_tensor = tiff_tensor_filtered
+            image = image_filtered
         
-        else:
-            tiff_tensor = tiff_tensor[:55]
-        
-        if self.prediction == 'phase':
-            return tiff_tensor, self.labels.iloc[idx]['phase_index']
-        
-        if self.prediction == 'age':
-            return tiff_tensor, self.labels.iloc[idx]['age']
-        
-        return tiff_tensor, self.labels.iloc[idx]['phase_index'], self.labels.iloc[idx]['age']
+        return image, self.labels.iloc[idx]['phase_index'], self.labels.iloc[idx]['pred_age'], self.labels.iloc[idx]['cell_id']
     
-    def augmentations(self, image: torch.Tensor):
-        """// TODO: Implement augmentations"""
-        pass
+    
+    def augmentations(self, image: torch.Tensor) -> torch.Tensor:
+        """
+        Method to augment the image by random rotation and translation. 
+        Args:
+            image (torch.Tensor): The image to augment.
+        """
+        assert type(image) == torch.Tensor, f'The input must be a torch.Tensor, not {type(image)}.'
+        
+        # Random rotation
+        angle = np.random.randint(0, 360)
+        image = transforms.functional.rotate(image, angle)
+        
+        xshift_min, xshift_max, yshift_min, yshift_max = _get_min_max_axis(image[62])
+
+        xshift = np.random.randint(xshift_min, xshift_max)
+        yshift = np.random.randint(yshift_min, yshift_max)
+
+        image = torch.roll(image, shifts=(xshift, yshift), dims=(1, 2))
+        
+        return image
+
+        
+def _get_min_max_axis(arr: torch.Tensor) -> tuple:
+    """
+    Finds the extreme points of a binary mask along the x and y axes.
+    
+    Args:
+        arr (torch.Tensor): the binary mask as a torch.Tensor
+
+    Returns:
+        tuple: tuple of the minimum and maximum values along the x and y axes (min_x, max_x, min_y, max_y)
+    """
+        
+    assert type(arr) == torch.Tensor, 'The input must be a torch.Tensor.'
+    
+    arr_rot = torch.rot90(arr, k=1, dims=[1,0])
+    
+    posx = [i for i, row in enumerate(arr_rot) if torch.any(row > 0)]
+    posy = [i for i, col in enumerate(arr) if torch.any(col > 0)]
+    
+    return -1 * posx[0], arr.shape[0] - posx[-1], -1 * posy[0], arr.shape[1] - posy[-1]
         
         
 def _resample(data: Union[pd.DataFrame, pd.Series], target: int):
@@ -130,8 +185,19 @@ def _resample(data: Union[pd.DataFrame, pd.Series], target: int):
     return data
 
 
-def _find_center_mask(mask: Union[torch.Tensor, np.ndarray]):
+def _find_center_mask(mask: torch.Tensor) -> torch.Tensor:
+    """
+    Finds the center-most mask in a binary mask.
+    Args:
+        mask (torch.Tensor): Mask tensor.
+
+    Returns:
+        torch.Tensor: returns a new tensor with only the center-most mask.
+    """
+    assert type(mask) == torch.Tensor, f'The input must be a torch.Tensor, not {type(mask)}.'
+    
     mask_unit8 = mask.numpy().astype(np.uint8)
+        
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask_unit8)
     img_center = np.array(mask.shape) // 2
     
@@ -143,4 +209,7 @@ def _find_center_mask(mask: Union[torch.Tensor, np.ndarray]):
 
 
 def _normalize_image(image: torch.Tensor) -> torch.Tensor:
-    return image / 255
+    if image.dtype != torch.float32:
+        image = image.to(torch.int32)
+        
+    return image.float() / 65535.0

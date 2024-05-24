@@ -7,6 +7,7 @@ output_dir: data/phaser_rpe/results
 
 use_masks: nuc # nuc, cyto, both, or null (null = no mask applied)
 augmentation: true
+fill_noise: false
 shuffle: true
 balancing: up
 

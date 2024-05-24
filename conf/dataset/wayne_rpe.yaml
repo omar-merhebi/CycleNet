@@ -5,9 +5,8 @@ labels: data/phaser_rpe/labels.csv
 channel_annotations: data/phaser_rpe/annotations.csv
 output_dir: data/phaser_rpe/results
 
-use_masks: nuc # nuc, cyto, both, or null (null = no mask applied)
-augmentation: true
-fill_noise: false
+use_masks: nuc # nuc, ring, both, or null (null = no mask applied)
+augment: true
 shuffle: true
 balancing: up
 
@@ -15,3 +14,8 @@ balancing: up
 # check annotations.csv for a list of channels
 # If null, uses the first 55 channels (up to pp65)
 use_channels: null
+
+# fills in zero pixels with noise from outside the cells
+fill:
+  enabled: true
+  fill_cell: false # fills interior of cells that are not the main cell

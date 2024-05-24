@@ -26,7 +26,7 @@ def main(cfg: DictConfig):
     
     cpus, gpus, total_mem = hlp.get_resource_allocation()
     
-    if not torch.cuda.is_available() or gpus == 0:
+    if not (torch.cuda.is_available() or gpus == 0) and not cfg.skip_gpu_check:
         raise RuntimeError('No GPUs available. Aborting...')
     
     print('\nEnvironment Details:')

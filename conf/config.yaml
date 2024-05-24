@@ -5,6 +5,7 @@ defaults:
   - _self_
 
 random_seed: 416
+skip_gpu_check: true
 
 wandb:
   project: PHASER

@@ -1,7 +1,7 @@
 defaults:
   - dataset: wayne_rpe
   - mode: train
-  - model: rotation_cnn
+  - model: alexnet
   - _self_
 
 random_seed: 416

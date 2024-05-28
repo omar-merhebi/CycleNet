@@ -17,5 +17,5 @@ use_channels: null
 
 # fills in zero pixels with noise from outside the cells
 fill:
-  enabled: true
+  enabled: false
   fill_cell: false # fills interior of cells that are not the main cell

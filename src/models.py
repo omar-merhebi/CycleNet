@@ -1,8 +1,12 @@
-from omegaconf import DictConfig
-from torch import nn
+import torch.nn as nn
 
-class RotationCNN(nn.Module):
-    """// TODO: Create RotationCNN model."""
-    def __init__(self, train_cfg: DictConfig):
-        super(RotationCNN, self).__init__()
+from omegaconf import DictConfig
+from torchvision import models
+
+def get_model(model_name: str, cfg: DictConfig, input_channels: int=55):
+    model_name = model_name.lower()
+    
+    
+    if model_name == 'alexnet':
+        model = models.alexnet(pretrained=False)
         

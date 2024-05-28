@@ -26,9 +26,9 @@ class WayneRPEDataset(Dataset):
         self.input_channels = len(self.use_channels) if self.use_channels else 55
         
         self.labels = pd.read_csv(cfg.dataset.labels)
-        self.labels['phase_index'], unique_phases = pd.factorize(self.labels['pred_phase'])
+        self.labels['phase_index'], self.unique_phases = pd.factorize(self.labels['pred_phase'])
         self.labels = self.labels.iloc[self.data_idx].reset_index(drop=True)
-        
+
         if self.cfg.dataset.balancing:
             balancing = self.cfg.dataset.balancing.lower()
             class_counts = Counter(self.labels['pred_phase'])
@@ -45,9 +45,8 @@ class WayneRPEDataset(Dataset):
             labels_g1 = _resample(self.labels[self.labels['pred_phase'] == 'G1'], target)
             labels_s = _resample(self.labels[self.labels['pred_phase'] == 'S'], target)
             labels_g2 = _resample(self.labels[self.labels['pred_phase'] == 'G2'], target)
-            labels_m = self.labels[self.labels['pred_phase'] == 'M'] # Don't resample M (too few samples)
 
-            self.labels = pd.concat([labels_g1, labels_s, labels_g2, labels_m])
+            self.labels = pd.concat([labels_g1, labels_s, labels_g2])
             
     def __len__(self):
         return len(self.labels)

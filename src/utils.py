@@ -34,11 +34,20 @@ def train(cfg: DictConfig) -> None:
     check_leakage(train_idx, val_idx, test_idx)
     print('No leakage detected between splits.')
     
-    train_dataset = DATASETS[cfg.dataset.name](cfg, train_idx, augment=cfg.dataset.augment)
-    val_dataset = DATASETS[cfg.dataset.name](cfg, val_idx, augment=cfg.dataset.augment)
-    test_dataset = DATASETS[cfg.dataset.name](cfg, test_idx, augment=False)
+    dataset = DATASETS.get(cfg.dataset.name)
+    if dataset is None:
+        raise ValueError(f'Dataset {cfg.dataset.name} not found.')
     
-    device = torch.device('cuda')
+    train_dataset = dataset(cfg, train_idx, augment=cfg.dataset.augment)
+    val_dataset = dataset(cfg, val_idx, augment=cfg.dataset.augment)
+    test_dataset = dataset(cfg, test_idx, augment=False)
+    
+    training_loader = DataLoader(train_dataset, batch_size=cfg.mode.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=cfg.mode.batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=cfg.mode.batch_size, shuffle=False)
+    
+    ic(train_dataset.unique_phases)
+    
 
 def check_leakage(train_idx: np.ndarray, test_idx: np.ndarray, 
                   val_idx: np.ndarray) -> None:

@@ -30,7 +30,7 @@ class WayneRPEDataset(Dataset):
         self.labels = pd.read_csv(cfg.dataset.labels)
         self.labels['phase_index'], self.unique_phases = pd.factorize(self.labels['pred_phase'])
         self.labels = self.labels.iloc[self.data_idx].reset_index(drop=True)
-
+        
         if self.cfg.dataset.balancing:
             balancing = self.cfg.dataset.balancing.lower()
             class_counts = Counter(self.labels['pred_phase'])

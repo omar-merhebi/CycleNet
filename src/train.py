@@ -56,6 +56,14 @@ def train(cfg: DictConfig, gpu: bool, num_workers: int = 2) -> None:
     train_dataset = dataset(cfg, train_idx, augment=cfg.dataset.augment)
     val_dataset = dataset(cfg, val_idx, augment=False)
     
+    print(f'Training Dataset Summary:')
+    print(f'Size:\t{len(train_dataset)}')
+    print(f'Classes:\t{train_dataset.unique_phases}')
+    print(f'Channels:\t{train_dataset.use_channels}')
+    print(f'N Channels:\t{train_dataset.input_channels}')
+    print(f'Log Channel:\t{train_dataset.log_image}')
+    print(f'Shape:\t{train_dataset[0][0].shape}')
+    
     training_loader = DataLoader(train_dataset, batch_size=cfg.model.train.batch_size, shuffle=True, num_workers=num_workers)
     val_loader = DataLoader(val_dataset, batch_size=cfg.model.train.batch_size, shuffle=False, num_workers=num_workers)
     

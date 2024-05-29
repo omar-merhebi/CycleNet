@@ -1,4 +1,5 @@
 import hydra
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
@@ -14,6 +15,7 @@ from typing import Union
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
 TODAY = date.today().strftime('%Y-%m-%d') 
+CMAP = plt.cm.viridis
 
 def convert_tensor_to_image(img_tensor: torch.Tensor) -> Image:
     """
@@ -41,7 +43,8 @@ def convert_tensor_to_image(img_tensor: torch.Tensor) -> Image:
         return Image.fromarray(np.zeros(img_array.shape))
     
     normalized_img = ((img_array - img_min) / (img_max - img_min))*255
-    image = Image.fromarray(normalized_img.astype(np.uint8), mode='L')
+    image = (normalized_img[:, :, :3]*255).astype(np.uint8)
+    image = Image.fromarray(image)
     return image
 
 def get_resource_allocation():

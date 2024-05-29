@@ -42,7 +42,7 @@ def convert_tensor_to_image(img_tensor: torch.Tensor) -> Image:
     if img_min == img_max:
         return Image.fromarray(np.zeros(img_array.shape))
     
-    normalized_img = ((img_array - img_min) / (img_max - img_min))*255
+    normalized_img = CMAP((img_array - img_min) / (img_max - img_min))
     image = (normalized_img[:, :, :3]*255).astype(np.uint8)
     image = Image.fromarray(image)
     return image

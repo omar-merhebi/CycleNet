@@ -56,7 +56,7 @@ def train(cfg: DictConfig, gpu: bool, num_workers: int = 2) -> None:
     train_dataset = dataset(cfg, train_idx, augment=cfg.dataset.augment)
     val_dataset = dataset(cfg, val_idx, augment=False)
     
-    print(f'Training Dataset Summary:')
+    print(f'\n\nTraining Dataset Summary:')
     print(f'Size:\t{len(train_dataset)}')
     print(f'Classes:\t{train_dataset.unique_phases}')
     print(f'Channels:\t{train_dataset.use_channels}')
@@ -79,7 +79,7 @@ def train(cfg: DictConfig, gpu: bool, num_workers: int = 2) -> None:
     else:
         device = torch.device('cpu')
         
-    print('Model Acrchitecture:\n')
+    print('\n\nModel Acrchitecture:\n')
     input_shape = tuple(train_dataset[0][0].shape)
     summary(model, input_size=input_shape, device='cpu')
     

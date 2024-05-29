@@ -8,6 +8,7 @@ import torch
 from collections import Counter
 from icecream import ic
 from omegaconf import DictConfig
+from PIL import Image
 from random import randint
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -102,6 +103,15 @@ class WayneRPEDataset(Dataset):
                 
                 image[z][zero_idx] = random_vals
                 
+        if self.cfg.dataset.log_image: 
+            channel_idx = list(set(self.channel_annotations[self.channel_annotations['feature'].isin(self.use_channels)]['frame'].tolist()))
+            assert len(channel_idx) == 1, f'Can only log one image to wandb. Found {len(channel_idx)} images to log.'
+            
+            log_image = image[channel_idx]
+            log_image = log_image.permute(1, 2, 0)
+            
+        else:
+            log_image = None
                      
         if self.cfg.dataset.use_channels:
             channel_idx = list(set(self.channel_annotations[self.channel_annotations['feature'].isin(self.use_channels)]['frame'].tolist()))
@@ -116,10 +126,12 @@ class WayneRPEDataset(Dataset):
                 
             image = image_filtered
             
+            
         else:
             image = image[:55]
+            
         
-        return image, self.labels.iloc[idx]['phase_index'], self.labels.iloc[idx]['cell_id']
+        return image, self.labels.iloc[idx]['phase_index'], self.labels.iloc[idx]['cell_id'], log_image
     
     
     def augmentations(self, image: torch.Tensor) -> torch.Tensor:

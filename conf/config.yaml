@@ -10,9 +10,16 @@ skip_gpu_check: true
 
 wandb:
   project: PHASER
-  group: ${model.name}
-  run_name: default_run
-  tags: null
+  group: ${model.name}_${dataset.name}
+  run_name: defaults
+  tags: 
+    - ${model.name}
+    - ${dataset.name}
+    - predict_phase
+    - all_channels
+    - masking
+    - augments
+    - dont_fill
 
 hydra:
   run:

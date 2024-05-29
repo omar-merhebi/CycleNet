@@ -25,6 +25,7 @@ def main(cfg: DictConfig):
     cfg_dict = OmegaConf.to_container(cfg, resolve=True)
     
     cpus, gpus, total_mem = hlp.get_resource_allocation()
+    gpus = 1 # until we implement multi-GPU training
     
     if not (torch.cuda.is_available() or gpus == 0) and not cfg.skip_gpu_check:
         raise RuntimeError('No GPUs available. Aborting...')

@@ -8,6 +8,7 @@ class CustomModel(nn.Module):
     def __init__(self, cfg: DictConfig, input_channels: int, num_classes: int, add_regressor: bool = False):
         super(CustomModel, self).__init__()
         self.cfg = cfg
+        self.add_regressor = add_regressor
         self.layers = nn.ModuleList()
         
         for layer in cfg.layers:
@@ -37,9 +38,9 @@ class CustomModel(nn.Module):
                                                 padding=layer.get('padding', 0)))
             
             elif layer_type == 'flatten':
-                # self.layers.append(nn.AdaptiveAvgPool2d((15, 15)))
+                self.layers.append(nn.AdaptiveAvgPool2d(7))
                 self.layers.append(nn.Flatten())
-                input_channels = 12 * 12 * input_channels
+                input_channels = 49 * input_channels
                 
             elif layer_type == 'dropout':
                 self.layers.append(nn.Dropout(p=layer.get('rate', 0.5)))    
@@ -52,7 +53,7 @@ class CustomModel(nn.Module):
                 
             self.classifier = nn.Linear(input_channels, num_classes)
             
-            if self.add_regressor():
+            if self.add_regressor:
                 self.regressor = nn.Linear(input_channels, 1)
                 
     def forward(self, x):
@@ -61,7 +62,7 @@ class CustomModel(nn.Module):
             
         class_output = self.classifier(x)
         
-        if self.add_regressor():
+        if self.add_regressor:
             reg_output = self.regressor(x)
             return class_output, reg_output
         

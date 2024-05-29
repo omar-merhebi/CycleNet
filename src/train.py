@@ -84,9 +84,9 @@ def train(cfg: DictConfig, gpu: bool) -> None:
     for epoch in range(cfg.model.train.epochs):
         # Ensure gradient tracking is on
         model.train(True)
-        avg_loss, avg_metric = train_one_epoch(epoch, model, training_loader, optimizer, 
-                                   loss_fn, cfg.model.train.metric, device)
-        
+        avg_loss, avg_metric, log_image = train_one_epoch(epoch, model, training_loader, optimizer, 
+                                                           loss_fn, cfg.model.train.metric, device)
+        print(log_image)
         running_val_loss = 0.0 
         running_val_metric = 0.0
         model.eval()
@@ -105,12 +105,14 @@ def train(cfg: DictConfig, gpu: bool) -> None:
         print(f'METRIC {cfg.model.train.metric} train {avg_metric:.3f} val {avg_val_metric:.3f}')
         
         wandb.log({"train_loss": avg_loss, "val_loss": avg_val_loss, 
-                   f"train_{cfg.model.train.metric}": avg_metric, f"val_{cfg.model.train.metric}": avg_val_metric})
+                   f"train_{cfg.model.train.metric}": avg_metric, f"val_{cfg.model.train.metric}": avg_val_metric,
+                   "example_images": log_image}, step=epoch)
         
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
-            model_path = model_save_path / f'{cfg.model.name}_epoch_{epoch}_val_loss_{avg_val_loss:.3f}'
+            model_path = model_save_path / f'best_model.pt'
             torch.save(model.state_dict(), model_path)
+            wandb.save('best_model.pt')
 
         
 def train_one_epoch(epoch: int, model: torch.nn.Module, training_loader: DataLoader, 
@@ -120,11 +122,12 @@ def train_one_epoch(epoch: int, model: torch.nn.Module, training_loader: DataLoa
     last_loss = 0.0
     running_metric = 0.0
     last_metric = 0.0
+    log_images_final = []
     
     for i, data in tqdm(enumerate(training_loader), desc=f'Epoch {epoch + 1}',
                         total=len(training_loader)):
         # Load input and labels
-        input, labels, cell_id = data[0].to(device), data[1].to(device), data[2]
+        input, labels, cell_id, log_images = data[0].to(device), data[1].to(device), data[2], data[3]
         
         # Zero parameter gradients
         optimizer.zero_grad()
@@ -145,8 +148,13 @@ def train_one_epoch(epoch: int, model: torch.nn.Module, training_loader: DataLoa
             running_loss = 0.0
             last_metric = running_metric / 100
             running_metric = 0.0
+            
+        if isinstance(log_images, torch.Tensor):
+            log_image = log_images.cpu().numpy()
+            
+        log_images_final.append(log_image)
 
-    return last_loss, last_metric
+    return last_loss, last_metric, log_images_final
 
 
 def calculate_metric(outputs: torch.Tensor, labels: torch.Tensor, metric: str) -> float:

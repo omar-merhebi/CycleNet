@@ -8,11 +8,41 @@ from datetime import date
 from collections.abc import Mapping
 from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
+from PIL import Image
 from typing import Union
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
 TODAY = date.today().strftime('%Y-%m-%d') 
+
+def convert_tensor_to_image(img_tensor: torch.Tensor) -> Image:
+    """
+    Convert a PyTorch tensor to a Image.
+    
+    Args:
+        image (torch.Tensor): The image tensor
+        
+    Returns:
+        Image: The image
+    """
+    
+    if img_tensor.dtype != torch.float32:
+        img_tensor = img_tensor.float()
+    
+    img_array = img_tensor.cpu().detach().numpy()
+    img_array = img_array.squeeze()
+    
+    assert len(img_array.shape) == 2, f'Invalid image shape: {img_array.shape}.'
+    
+    img_min = img_array.min()
+    img_max = img_array.max()
+    
+    if img_min == img_max:
+        return Image.fromarray(np.zeros(img_array.shape))
+    
+    normalized_img = ((img_array - img_min) / (img_max - img_min))*255
+    image = Image.fromarray(normalized_img.astype(np.uint8), mode='L')
+    return image
 
 def get_resource_allocation():
     """

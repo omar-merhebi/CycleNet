@@ -38,9 +38,9 @@ class CustomModel(nn.Module):
                                                 padding=layer.get('padding', 0)))
             
             elif layer_type == 'flatten':
-                self.layers.append(nn.AdaptiveAvgPool2d(7))
+                self.layers.append(nn.AdaptiveAvgPool2d(12))
                 self.layers.append(nn.Flatten())
-                input_channels = 49 * input_channels
+                input_channels = 12 * 12 * input_channels
                 
             elif layer_type == 'dropout':
                 self.layers.append(nn.Dropout(p=layer.get('rate', 0.5)))    

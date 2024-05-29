@@ -24,6 +24,7 @@ class WayneRPEDataset(Dataset):
         self.channel_annotations['feature'] = self.channel_annotations['feature'].apply(lambda x: x.lower().strip())
         
         self.use_channels = [channel.lower().strip() for channel in self.cfg.dataset.use_channels] if self.cfg.dataset.use_channels else None
+        self.log_image = [self.cfg.dataset.log_image.lower().strip()]
         self.input_channels = len(self.use_channels) if self.use_channels else 55
         
         self.labels = pd.read_csv(cfg.dataset.labels)
@@ -104,7 +105,7 @@ class WayneRPEDataset(Dataset):
                 image[z][zero_idx] = random_vals
                 
         if self.cfg.dataset.log_image: 
-            channel_idx = list(set(self.channel_annotations[self.channel_annotations['feature'].isin(self.use_channels)]['frame'].tolist()))
+            channel_idx = list(set(self.channel_annotations[self.channel_annotations['feature'].isin(self.log_image)]['frame'].tolist()))
             assert len(channel_idx) == 1, f'Can only log one image to wandb. Found {len(channel_idx)} images to log.'
             
             log_image = image[channel_idx]

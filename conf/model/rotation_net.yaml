@@ -1,5 +1,5 @@
 name: 'rotation_net'
-save_path: 'saved_models/rotation_net/default/'
+save_path: 'saved_models/rotation_net/'
 
 train:
   epochs: 20

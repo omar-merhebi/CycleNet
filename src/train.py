@@ -42,7 +42,7 @@ def train(cfg: DictConfig, gpu: bool, num_workers: int = 2) -> None:
                tags=cfg.wandb.tags,
                config=OmegaConf.to_container(cfg.model, resolve=True))
     
-    model_save_path =Path(cfg.model.save_path) / TODAY
+    model_save_path =Path(cfg.model.save_path) / cfg.wandb.run_name / TODAY
     model_save_path.mkdir(parents=True, exist_ok=True)
     
     train_idx, val_idx, test_idx = _create_splits(cfg.dataset.labels, cfg.dataset.splits, cfg.random_seed)

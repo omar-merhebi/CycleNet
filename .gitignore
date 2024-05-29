@@ -14,5 +14,3 @@ data/*
 oem.code-workspace
 wandb/
 saved_models/
-slurm/*
-*.sh

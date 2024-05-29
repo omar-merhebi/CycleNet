@@ -45,9 +45,10 @@ def main(cfg: DictConfig):
     pprint(cfg_dict)
     
     model_cfg = OmegaConf.to_container(cfg.model)
+    num_workers = (cpus - 2) // 2 # leave 2 CPUs for the OS/training
     
     if cfg.mode.lower() == 'train':
-        tr.train(cfg, gpu=torch.cuda.is_available())
+        tr.train(cfg, gpu=torch.cuda.is_available(), num_workers=num_workers)
 
 if __name__ == "__main__":
     main()

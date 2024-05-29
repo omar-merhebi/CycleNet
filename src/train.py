@@ -28,7 +28,7 @@ DATASETS = {
     'wayne_rpe': WayneRPEDataset
 }
 
-def train(cfg: DictConfig, gpu: bool) -> None:
+def train(cfg: DictConfig, gpu: bool, num_workers: int = 2) -> None:
     """
     Training loop.
     Args:
@@ -55,11 +55,9 @@ def train(cfg: DictConfig, gpu: bool) -> None:
     
     train_dataset = dataset(cfg, train_idx, augment=cfg.dataset.augment)
     val_dataset = dataset(cfg, val_idx, augment=False)
-    test_dataset = dataset(cfg, test_idx, augment=False)
     
-    training_loader = DataLoader(train_dataset, batch_size=cfg.model.train.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=cfg.model.train.batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=cfg.model.train.batch_size, shuffle=False)
+    training_loader = DataLoader(train_dataset, batch_size=cfg.model.train.batch_size, shuffle=True, num_workers=num_workers)
+    val_loader = DataLoader(val_dataset, batch_size=cfg.model.train.batch_size, shuffle=False, num_workers=num_workers)
     
     model = CustomModel(cfg.model, input_channels=train_dataset.input_channels, 
                         num_classes=len(train_dataset.unique_phases))
@@ -86,13 +84,14 @@ def train(cfg: DictConfig, gpu: bool) -> None:
     for epoch in range(cfg.model.train.epochs):
         # Ensure gradient tracking is on
         model.train(True)
-        avg_loss, avg_metric, log_images = train_one_epoch(epoch, model, training_loader, optimizer, 
+        avg_loss, avg_metric, log_images, cell_ids = train_one_epoch(epoch, model, training_loader, optimizer, 
                                                            loss_fn, cfg.model.train.metric, device)
         
         log_images = [convert_tensor_to_image(img) for img in log_images]
         log_images = log_images[:3] # Only log 3 images per epoch 
+        cell_ids = cell_ids[:3]
         
-        log_images = [wandb.Image(img) for img in log_images]
+        log_images = [wandb.Image(img, caption=cell_ids[i]) for i, img in enumerate(log_images)]
         
         running_val_loss = 0.0 
         running_val_metric = 0.0
@@ -120,6 +119,10 @@ def train(cfg: DictConfig, gpu: bool) -> None:
             model_path = model_save_path / f'best_model.pt'
             torch.save(model.state_dict(), model_path)
             wandb.save('best_model.pt')
+    
+    del train_dataset, val_dataset, training_loader, val_loader
+    
+    print('Training complete.')
 
         
 def train_one_epoch(epoch: int, model: torch.nn.Module, training_loader: DataLoader, 
@@ -130,11 +133,12 @@ def train_one_epoch(epoch: int, model: torch.nn.Module, training_loader: DataLoa
     running_metric = 0.0
     last_metric = 0.0
     log_images = []
+    cell_ids = []
 
     for i, data in tqdm(enumerate(training_loader), desc=f'Epoch {epoch + 1}',
                         total=len(training_loader)):
         # Load input and labels
-        input, labels, cell_id, train_log_imgs = data[0].to(device), data[1].to(device), data[2], data[3]
+        input, labels, train_cell_ids, train_log_imgs = data[0].to(device), data[1].to(device), data[2], data[3]
         
         # Zero parameter gradients
         optimizer.zero_grad()
@@ -157,8 +161,9 @@ def train_one_epoch(epoch: int, model: torch.nn.Module, training_loader: DataLoa
             running_metric = 0.0
             
             log_images.extend([train_log_imgs[i] for i in range(train_log_imgs.shape[0])])
+            cell_ids.extend(train_cell_ids)
 
-    return last_loss, last_metric, log_images
+    return last_loss, last_metric, log_images, cell_ids
 
 
 def calculate_metric(outputs: torch.Tensor, labels: torch.Tensor, metric: str) -> float:

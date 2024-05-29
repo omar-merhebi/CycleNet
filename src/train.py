@@ -8,6 +8,7 @@ from datetime import date
 from icecream import ic
 from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
+from PIL import Image
 from sklearn.model_selection._split import train_test_split
 from torch.utils.data import DataLoader
 from torchsummary import summary
@@ -17,6 +18,7 @@ import wandb
 
 from .datasets import WayneRPEDataset
 from .model_builder import CustomModel
+from .helpers import convert_tensor_to_image
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
@@ -52,7 +54,7 @@ def train(cfg: DictConfig, gpu: bool) -> None:
         raise ValueError(f'Dataset {cfg.dataset.name} not found.')
     
     train_dataset = dataset(cfg, train_idx, augment=cfg.dataset.augment)
-    val_dataset = dataset(cfg, val_idx, augment=cfg.dataset.augment)
+    val_dataset = dataset(cfg, val_idx, augment=False)
     test_dataset = dataset(cfg, test_idx, augment=False)
     
     training_loader = DataLoader(train_dataset, batch_size=cfg.model.train.batch_size, shuffle=True)
@@ -84,16 +86,21 @@ def train(cfg: DictConfig, gpu: bool) -> None:
     for epoch in range(cfg.model.train.epochs):
         # Ensure gradient tracking is on
         model.train(True)
-        avg_loss, avg_metric, log_image = train_one_epoch(epoch, model, training_loader, optimizer, 
+        avg_loss, avg_metric, log_images = train_one_epoch(epoch, model, training_loader, optimizer, 
                                                            loss_fn, cfg.model.train.metric, device)
-        print(log_image)
+        
+        log_images = [convert_tensor_to_image(img) for img in log_images]
+        log_images = log_images[:3] # Only log 3 images per epoch 
+        
+        log_images = [wandb.Image(img) for img in log_images]
+        
         running_val_loss = 0.0 
         running_val_metric = 0.0
         model.eval()
         
         with torch.no_grad():
             for i, vdata in enumerate(val_loader):
-                val_input, val_labels, val_cell_id = vdata[0].to(device), vdata[1].to(device), vdata[2]
+                val_input, val_labels, val_cell_id, val_imgs = vdata[0].to(device), vdata[1].to(device), vdata[2], vdata[3]
                 val_outputs = model(val_input)
                 val_loss = loss_fn(val_outputs, val_labels)
                 running_val_loss += val_loss.item()
@@ -106,7 +113,7 @@ def train(cfg: DictConfig, gpu: bool) -> None:
         
         wandb.log({"train_loss": avg_loss, "val_loss": avg_val_loss, 
                    f"train_{cfg.model.train.metric}": avg_metric, f"val_{cfg.model.train.metric}": avg_val_metric,
-                   "example_images": log_image}, step=epoch)
+                   "example_images": log_images}, step=epoch)
         
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
@@ -122,12 +129,12 @@ def train_one_epoch(epoch: int, model: torch.nn.Module, training_loader: DataLoa
     last_loss = 0.0
     running_metric = 0.0
     last_metric = 0.0
-    log_images_final = []
-    
+    log_images = []
+
     for i, data in tqdm(enumerate(training_loader), desc=f'Epoch {epoch + 1}',
                         total=len(training_loader)):
         # Load input and labels
-        input, labels, cell_id, log_images = data[0].to(device), data[1].to(device), data[2], data[3]
+        input, labels, cell_id, train_log_imgs = data[0].to(device), data[1].to(device), data[2], data[3]
         
         # Zero parameter gradients
         optimizer.zero_grad()
@@ -149,12 +156,9 @@ def train_one_epoch(epoch: int, model: torch.nn.Module, training_loader: DataLoa
             last_metric = running_metric / 100
             running_metric = 0.0
             
-        if isinstance(log_images, torch.Tensor):
-            log_image = log_images.cpu().numpy()
-            
-        log_images_final.append(log_image)
+            log_images.extend([train_log_imgs[i] for i in range(train_log_imgs.shape[0])])
 
-    return last_loss, last_metric, log_images_final
+    return last_loss, last_metric, log_images
 
 
 def calculate_metric(outputs: torch.Tensor, labels: torch.Tensor, metric: str) -> float:

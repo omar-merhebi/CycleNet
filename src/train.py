@@ -104,8 +104,8 @@ def train(cfg: DictConfig, gpu: bool) -> None:
         print(f'LOSS train {avg_loss:.3f} val {avg_val_loss:.3f}')
         print(f'METRIC {cfg.model.train.metric} train {avg_metric:.3f} val {avg_val_metric:.3f}')
         
-        wandb.log({"train_loss": avg_loss, "val_loss": avg_val_loss})
-        wandb.log({f"train_{cfg.model.train.metric}": avg_metric, f"val_{cfg.model.train.metric}": avg_val_metric})
+        wandb.log({"train_loss": avg_loss, "val_loss": avg_val_loss, 
+                   f"train_{cfg.model.train.metric}": avg_metric, f"val_{cfg.model.train.metric}": avg_val_metric})
         
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss

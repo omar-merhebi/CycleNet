@@ -36,6 +36,7 @@ def train(cfg: DictConfig, gpu: bool, num_workers: int = 2) -> None:
     """
     
     wandb.init(project=cfg.wandb.project,
+               entity='merhebi-omar',
                group=cfg.wandb.group,
                name=cfg.wandb.run_name,
                tags=cfg.wandb.tags,

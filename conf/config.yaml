@@ -11,7 +11,7 @@ skip_gpu_check: true
 wandb:
   project: PHASER
   group: ${model.name}_${dataset.name}
-  run_name: defaults_desktop
+  run_name: defaults_dsktp
   tags: 
     - ${model.name}
     - ${dataset.name}

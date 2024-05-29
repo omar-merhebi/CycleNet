@@ -17,4 +17,4 @@ pyenv activate PHASER
 module load gcc
 module load cuda
 
-python main.py dataset.augment=false +wandb.tags=[all_channels,predict_phase,masking,no_augments,no_fill] wandb.run_name=no_augments
+python main.py dataset.augment=false +wandb.tags=[all_channels,predict_phase,masking,no_augments,no_fill] wandb.run_name=no_augments_dsktp

@@ -17,4 +17,4 @@ pyenv activate PHASER
 module load gcc
 module load cuda
 
-python main.py +dataset.use_channels=[DNA1] +wandb.tags=[dna_channel,predict_phase,masking,augments,no_fill] wandb.run_name=dna_only model.save_path='saved_models/rotation_net/dna_only/'
+python main.py +dataset.use_channels=[DNA1] +wandb.tags=[dna_channel,predict_phase,masking,augments,no_fill] wandb.run_name=dna_only_dsktp model.save_path='saved_models/rotation_net/dna_only/'

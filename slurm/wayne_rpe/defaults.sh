@@ -17,4 +17,4 @@ pyenv activate PHASER
 module load gcc
 module load cuda
 
-python main.py 
+python main.py wandb.run_name=default_desktop

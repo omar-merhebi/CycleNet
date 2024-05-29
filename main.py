@@ -10,7 +10,7 @@ from pathlib import Path
 from pprint import pprint as pprint
 
 from src import helpers as hlp
-from src import utils
+from src import train as tr
 
 
 PROJECT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
@@ -45,14 +45,8 @@ def main(cfg: DictConfig):
     
     model_cfg = OmegaConf.to_container(cfg.model)
     
-    # wandb.init(project=cfg.wandb.project,
-    #            group=cfg.wandb.group,
-    #            name=cfg.wandb.run_name,
-    #            tags=cfg.wandb.tags if cfg.wandb.tags else None,
-    #            config=model_cfg[f'{cfg.mode.name}'])
-    
-    if cfg.mode.name == 'train':
-        utils.train(cfg)
+    if cfg.mode.lower() == 'train':
+        tr.train(cfg, gpu=torch.cuda.is_available())
 
 if __name__ == "__main__":
     main()

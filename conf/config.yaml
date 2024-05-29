@@ -1,15 +1,16 @@
 defaults:
   - dataset: wayne_rpe
-  - mode: train
-  - model: alexnet
+  - model: rotation_net
+  - optimizer: adam
   - _self_
 
+mode: train
 random_seed: 416
 skip_gpu_check: true
 
 wandb:
   project: PHASER
-  group: ${model.name}_${mode.name}
+  group: ${model.name}
   run_name: default_run
   tags: null
 

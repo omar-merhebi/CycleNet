@@ -14,8 +14,14 @@ balancing: up
 # check annotations.csv for a list of channels
 # If null, uses the first 55 channels (up to pp65)
 use_channels: null
+log_image_channel: DNA1
 
 # fills in zero pixels with noise from outside the cells
 fill:
   enabled: false
   fill_cell: false # fills interior of cells that are not the main cell
+
+splits: 
+  train: 0.8
+  val: 0.1
+  test: 0.1

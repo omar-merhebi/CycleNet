@@ -12,8 +12,7 @@ from typing import Union
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
-TODAY = date.today().strftime('%Y-%m-%d')
-
+TODAY = date.today().strftime('%Y-%m-%d') 
 
 def get_resource_allocation():
     """
@@ -67,14 +66,11 @@ def check_config(cfg: DictConfig):
     if not cfg.dataset.data_dir:
         raise ValueError('No data directory found.')
     
-    if not cfg.mode:
-        raise ValueError('No mode configuration found.')
-    
-    if not cfg.mode.splits:
+    if not cfg.dataset.splits:
         raise ValueError('No splits configuration found.')
     
     total_split = 0
-    for (k,v) in cfg.mode.splits.items():
+    for (k,v) in cfg.dataset.splits.items():
         if not v:
             raise ValueError(f'No value found for split {k}.')
         

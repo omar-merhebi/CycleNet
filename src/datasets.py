@@ -32,7 +32,6 @@ class WayneRPEDataset(Dataset):
         if self.cfg.dataset.balancing:
             balancing = self.cfg.dataset.balancing.lower()
             class_counts = Counter(self.labels['pred_phase'])
-            
             if 'over' in balancing or 'up' in balancing:
                 target = class_counts['G1']
                 
@@ -116,8 +115,11 @@ class WayneRPEDataset(Dataset):
                 assert torch.equal(image_filtered[c], image[channel])
                 
             image = image_filtered
+            
+        else:
+            image = image[:55]
         
-        return image, self.labels.iloc[idx]['phase_index'], self.labels.iloc[idx]['pred_age'], self.labels.iloc[idx]['cell_id']
+        return image, self.labels.iloc[idx]['phase_index'], self.labels.iloc[idx]['cell_id']
     
     
     def augmentations(self, image: torch.Tensor) -> torch.Tensor:

@@ -10,9 +10,9 @@ __pycache__/
 *.err
 *.out
 *.sh
-jobs/*
-slurm/*
-data/*
+pytorch/jobs/*
+pytorch/slurm/*
+pytorch/data/*
 oem.code-workspace
-wandb/
-saved_models/
+pytorch/wandb/
+pytorch/saved_models/

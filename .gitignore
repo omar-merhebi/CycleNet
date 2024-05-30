@@ -9,8 +9,9 @@ __pycache__/
 *.log
 *.err
 *.out
+*.sh
 jobs/*
-slurm_scripts/*
+slurm/*
 data/*
 oem.code-workspace
 wandb/

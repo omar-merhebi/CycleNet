@@ -13,6 +13,7 @@ __pycache__/
 pytorch/jobs/*
 pytorch/slurm/*
 pytorch/data/*
+tensorflow/data/*
 oem.code-workspace
 pytorch/wandb/
 pytorch/saved_models/

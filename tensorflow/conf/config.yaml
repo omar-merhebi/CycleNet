@@ -1,0 +1,39 @@
+defaults:
+  - dataset: wayne_rpe
+  - model: rotation_net
+  - optimizer: adam
+  - _self_
+
+mode: train
+random_seed: 416
+skip_gpu_check: true
+
+wandb:
+  project: PHASER
+  group: ${model.name}_${dataset.name}
+  run_name: defaults_dsktp
+  tags: 
+    - ${model.name}
+    - ${dataset.name}
+    - predict_phase
+    - all_channels
+    - masking
+    - augments
+    - dont_fill
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+  job_logging:
+    formatters:
+      simple:
+        format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: simple
+        stream: ext://sys.stdout
+    root:
+      level: CRITICAL
+      handlers: [console]

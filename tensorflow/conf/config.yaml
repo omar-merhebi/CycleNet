@@ -1,10 +1,9 @@
 defaults:
   - dataset: wayne_rpe
   - model: rotation_net
-  - optimizer: adam
+  - mode: train
   - _self_
 
-mode: train
 random_seed: 416
 skip_gpu_check: true
 

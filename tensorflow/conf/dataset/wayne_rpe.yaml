@@ -8,14 +8,14 @@ output_dir: data/phaser_rpe/results
 
 # Image Manipulations 
 # (order = mask > augment > fill)
+# note: not applied to val or test data
 use_masks: nuc # nuc or cell (cell = nuc + ring)
 augment: true
 fill:
-  enabled: false
+  enabled: true
   multiplier: 1 # ignored if disabled
 
-# Dataset Manipulation
-shuffle: true
+# Dataset Manipulation 
 balancing: up
 splits: 
   train: 0.8

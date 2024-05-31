@@ -1,96 +1,17 @@
-name: 'rotation_net'
-save_path: 'saved_models/rotation_net/'
-
-# Training parameters
-train:
-  epochs: 20
-  batch_size: 20
-  loss: 'CrossEntropy'
-  metric: 'CategoricalAccuracy'
-  initializer:
-    name: 'he_normal'
-    mode: 'fan_out'
-    nonlinearity: 'relu'
+name: rotation_net
+save_path: saved_models/rotation_net/
 
 # Misc
-add_regressor: false # adds a single neuron output to the model for pred_age
+add_regressor: false      # Adds a single neuron output to the model for pred_age
 
-# Model architecture 
-# note output layer is added automatically based on the number of classes 
-# in the dataset, do not include it here.
-layers:
-  - type: "Conv2D"
-    name: "Conv1"
-    out: 55 
-    kernel_size: 7
-    padding: 'same'
-    stride: 1
-    activation: 'relu'
-
-  - type: "AvgPool2D"
-    name: "Pool1"
-    pool_size: 2
-    stride: 2
-
-  - type: "Conv2D"
-    name: "Conv2"
-    out: 110
-    kernel_size: 3
-    padding: 'same'
-    stride: 1
-    activation: 'relu'
-
-  - type: "Conv2D"
-    name: "Conv3"
-    out: 110
-    kernel_size: 3
-    padding: 'same'
-    stride: 1
-    activation: 'relu'
-
-  - type: "AvgPool2D"
-    name: "Pool2"
-    pool_size: 2
-    stride: 2
-
-  - type: "Conv2D"
-    name: "Conv4"
-    out: 220
-    kernel_size: 3
-    padding: 'same'
-    stride: 1
-    activation: 'relu'
-
-  - type: "Conv2D"
-    name: "Conv5"
-    out: 220
-    kernel_size: 3
-    padding: 'same'
-    stride: 1
-    activation: 'relu'
-
-  - type: "AvgPool2D"  
-    name: "Pool3"
-    pool_size: 2
-    stride: 2
-
-  - type: "Flatten"
-    name: "Flatten"
-
-  - type: "Dense"
-    name: "Dense1"
-    out: 128
-    activation: 'relu'
-
-  - type: "Dropout"
-    name: "Dropout1"
-    rate: 0.5
-
-  - type: "Dense"
-    name: "Dense2"
-    out: 64
-    activation: 'relu'
-
-  - type: "Dropout"
-    name: "Dropout2"
-    rate: 0.5
+# Model parameters
+activation: relu          # Output layer for classifier is always softmax
+num_conv_layers: 3        # Number of conv + pool layers
+kernel_size: 3
+pool: avg
+pool_kernel_size: 2
+pair_convs: true          # Whether to have two convolutions in each layer
+filters: [55, 110, 220]   # Number of filters with each layer (length equal to num_conv_layers)
+dropout: 0.5
+num_dense_layers: 2       # Excluding output
+dense_neurons: [128, 64]  # Number of neurons in dense layers (length must be equal to num_dense_layers)

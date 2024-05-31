@@ -1,6 +1,7 @@
 name: 'rotation_net'
 save_path: 'saved_models/rotation_net/'
 
+# Training parameters
 train:
   epochs: 20
   batch_size: 20
@@ -11,9 +12,12 @@ train:
     mode: 'fan_out'
     nonlinearity: 'relu'
 
+# Misc
 add_regressor: false # adds a single neuron output to the model for pred_age
 
-# Model architecture (note output layer is added automatically based on the number of classes in the dataset, do not include it here)
+# Model architecture 
+# note output layer is added automatically based on the number of classes 
+# in the dataset, do not include it here.
 layers:
   - type: "Conv2D"
     name: "Conv1"

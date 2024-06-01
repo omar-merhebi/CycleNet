@@ -21,7 +21,7 @@ splits:
   train: 0.8
   val: 0.1
   test: 0.1
-use_channels: null # list of channels to use (names not indices, check annotations.csv). If null uses channels [0 to 55)
+channels: null # list of channels to use (names not indices, check annotations.csv). If null uses channels [0 to 55)
 
 # For logging purposes
 log_image: DNA1

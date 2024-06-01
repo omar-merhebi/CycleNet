@@ -9,7 +9,7 @@ output_dir: data/phaser_rpe/results
 # Image Manipulations 
 # (order = mask > augment > fill)
 # note: not applied to val or test data
-use_masks: nuc # nuc or cell (cell = nuc + ring)
+masks: nuc # nuc, cell, or null (cell = nuc + ring, null = no mask, non-centered cells are masked out)
 augment: true
 fill:
   enabled: true

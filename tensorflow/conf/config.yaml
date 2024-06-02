@@ -5,7 +5,7 @@ defaults:
   - _self_
 
 random_seed: 416
-skip_gpu_check: true
+force_gpu: true  # Will stop the program if GPU not detected
 
 wandb:
   project: PHASER
@@ -27,12 +27,12 @@ hydra:
   job_logging:
     formatters:
       simple:
-        format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format: '%(asctime)s %(levelname)s: %(message)s'
     handlers:
       console:
         class: logging.StreamHandler
         formatter: simple
         stream: ext://sys.stdout
     root:
-      level: CRITICAL
+      level: INFO
       handlers: [console]

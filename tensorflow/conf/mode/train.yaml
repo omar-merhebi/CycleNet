@@ -8,5 +8,6 @@ optimizer: 'adam'
 learning_rate: 0.001
 data_shuffle: true
 
-early_stopping: true
+early_stopping:
+  enabled: true
   patience: 3

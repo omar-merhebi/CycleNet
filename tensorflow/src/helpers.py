@@ -106,9 +106,9 @@ def check_config(cfg: DictConfig):
     if not cfg.dataset.splits:
         raise ValueError('No splits configuration found.')
 
-    # // TODO Check Mask ID
-
-    # // TODO Check Log Image
+    if cfg.dataset.mask:
+        if cfg.dataset.mask not in ['nuc', 'cell']:
+            raise ValueError(f'Invalid mask name: {cfg.dataset.mask}')
 
     total_split = 0
     for (k, v) in cfg.dataset.splits.items():

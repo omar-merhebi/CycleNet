@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import json
+import logging
 import numpy as np
 import os
 import tensorflow as tf
@@ -14,6 +16,52 @@ CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
 TODAY = date.today().strftime('%Y-%m-%d')
 CMAP = plt.cm.viridis
+
+log = logging.getLogger(__name__)
+
+
+def log_cfg(cfg: DictConfig) -> None:
+    """
+    Logs the Hydra configuration.
+    Args:
+        cfg (DictConfig): Hydra configuration dict.
+    """
+
+    pretty_cfg = json.dumps(cfg, indent=4)
+
+    log.info(f'Loaded Config:\n{pretty_cfg}')
+
+
+def log_env_details(cpus: int, gpus: int, total_mem: int) -> None:
+    """
+    Logs environment details at level INFO.
+    Args:
+        cpus (int): Number of CPUs
+        gpus (int): Number of GPUs
+        total_mem (int): Amount of Memory in MB
+    """
+    log.info(f"CPUs:\t{cpus}")
+    log.info(f"GPUs:\t{gpus}")
+    log.info(f"Available Memory:\t{total_mem} MB")
+
+
+def test_gpu(force_gpu: bool = False) -> None:
+    """
+    Tests whether the gpu is available and logs. Stops execution if
+    force_gpu = True but one isn't available.
+    Args:
+        force_gpu (bool, optional): Whether to force execution halt
+        if gpu not available. Defaults to False.
+    """
+
+    if not tf.test.is_gpu_available:
+        if force_gpu:
+            log.critical("Execution terminated: failed to detect GPU, but "
+                         "force_gpu is set to True.")
+            raise RuntimeError
+
+        else:
+            log.warning("Failed to detect GPU. Using CPU instead.")
 
 
 def convert_tensor_to_image(img_tensor: tf.Tensor) -> Image:

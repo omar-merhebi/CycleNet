@@ -3,7 +3,6 @@ epochs: 20
 batch_size: 20
 loss: 'CrossEntropy'
 metric: 'CategoricalAccuracy'
-initializer: 'he_normal'
 optimizer: 'adam'
 learning_rate: 0.001
 data_shuffle: true

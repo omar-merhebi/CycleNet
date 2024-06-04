@@ -6,13 +6,17 @@ add_regressor: false      # Adds a single neuron output to the model for pred_ag
 
 # Model parameters
 build_type: cnn           # Tells model builder what type of model to build
-activation: relu          # Output layer for classifier is always softmax
 num_conv_layers: 3        # Number of conv + pool layers
-kernel_size: 3
+filters: [55, 110, 220]   # Number of filters with each layer (length equal to num_conv_layers)
+conv_kernel_size: 3
+conv_padding: 'same'
+conv_activation: relu     # Output layer for classifier is always softmax
 pool: avg
 pool_kernel_size: 2
+pool_padding: 0
 pair_convs: true          # Whether to have two convolutions in each layer
-filters: [55, 110, 220]   # Number of filters with each layer (length equal to num_conv_layers)
 dropout: 0.5
 num_dense_layers: 2       # Excluding output
 dense_neurons: [128, 64]  # Number of neurons in dense layers (length must be equal to num_dense_layers)
+dense_activation: relu
+initializer: 'he_normal'

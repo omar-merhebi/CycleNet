@@ -5,6 +5,7 @@ save_path: saved_models/rotation_net/
 add_regressor: false      # Adds a single neuron output to the model for pred_age
 
 # Model parameters
+build_type: cnn           # Tells model builder what type of model to build
 activation: relu          # Output layer for classifier is always softmax
 num_conv_layers: 3        # Number of conv + pool layers
 kernel_size: 3

@@ -80,7 +80,14 @@ def convert_tensor_to_image(img_tensor: tf.Tensor) -> Image:
     img_arr = img_tensor.numpy()
     img_arr = img_arr.squeeze()
 
-    assert len(img_arr.shape) == 2, f'Invalid image shape: {img_arr.shape}.'
+    if len(img_arr.shape) != 2:
+        log.critical(
+            'Attempted conversion of image to tensor with non-2D shape.\n'
+            f'Invalid image shape: {img_arr.shape}.')
+        
+        raise ValueError(
+            'Attempted conversion of image to tensor with non-2D shape.\n'
+            f'Invalid image shape: {img_arr.shape}.')
 
     img_min = img_arr.min()
     img_max = img_arr.max()
@@ -146,30 +153,39 @@ def check_config(cfg: DictConfig):
     split_names = ['train', 'val', 'test']
 
     if not cfg.dataset:
+        log.critical('No dataset configuarion found.')
         raise ValueError('No dataset configuration found.')
 
     if not cfg.dataset.data_dir:
+        log.critical('No data directory found.')
         raise ValueError('No data directory found.')
 
     if not cfg.dataset.splits:
+        log.critical('No splits configuation found.')
         raise ValueError('No splits configuration found.')
 
     if cfg.dataset.mask:
         if cfg.dataset.mask not in ['nuc', 'cell']:
+            log.critical(f'Invalid mask name: {cfg.dataset.mask}')
             raise ValueError(f'Invalid mask name: {cfg.dataset.mask}')
 
     total_split = 0
     for (k, v) in cfg.dataset.splits.items():
         if not v:
+            log.critical('No value found for split {k}.')
             raise ValueError(f'No value found for split {k}.')
 
         if k not in split_names:
+            log.critical(f'Invalid split name: {k}.'
+                         f'Must be one of: {split_names}.')
+            
             raise ValueError(f'Invalid split name: {k}.'
                              f'Must be one of: {split_names}.')
 
         total_split += v
 
     if total_split != 1:
+        log.critical('Split values must sum to 1.')
         raise ValueError('Split values must sum to 1.')
 
 

@@ -84,7 +84,7 @@ def convert_tensor_to_image(img_tensor: tf.Tensor) -> Image:
         log.critical(
             'Attempted conversion of image to tensor with non-2D shape.\n'
             f'Invalid image shape: {img_arr.shape}.')
-        
+
         raise ValueError(
             'Attempted conversion of image to tensor with non-2D shape.\n'
             f'Invalid image shape: {img_arr.shape}.')
@@ -178,7 +178,7 @@ def check_config(cfg: DictConfig):
         if k not in split_names:
             log.critical(f'Invalid split name: {k}.'
                          f'Must be one of: {split_names}.')
-            
+
             raise ValueError(f'Invalid split name: {k}.'
                              f'Must be one of: {split_names}.')
 
@@ -187,6 +187,60 @@ def check_config(cfg: DictConfig):
     if total_split != 1:
         log.critical('Split values must sum to 1.')
         raise ValueError('Split values must sum to 1.')
+
+    try:
+        filters_given = len(cfg.model.filters)
+
+    except TypeError:
+        log.critical(
+            'Filters configuration for the model should be a list,'
+            f'not {type(cfg.model.filters)}')
+
+        raise ValueError(
+            'filters configuration for the model should be a list,'
+            f'not {type(cfg.model.filters)}')
+        
+    if filters_given != cfg.model.num_conv_layers:
+        log.critical(
+            "Must provide the number of filters to use for each layer,"
+            "i.e., len(filters) == num_conv_layers in model config. Got:\n"
+            f"Number of filters:\t{filters_given}\n"
+            f"Number of Conv Layers:\t{cfg.model.num_conv_layers}")
+        
+        raise ValueError(
+            "Must provide the number of filters to use for each layer,"
+            "i.e., len(filters) == num_conv_layers in model config. Got:\n"
+            f"Number of filters:\t{filters_given}\n"
+            f"Number of Conv Layers:\t{cfg.model.num_conv_layers}"
+        )
+        
+    try:
+        neurons_given = len(cfg.model.dense_neurons)
+        
+    except TypeError:
+        log.critical(
+            "Dense layer neuron configuration for the model should be a list,"
+            f"not {type(cfg.model.dense_neurons)}"
+        )
+        
+        raise ValueError(
+            "Dense layer neuron configuration for the model should be a list,"
+            f"not {type(cfg.model.dense_neurons)}"
+        )
+        
+    if neurons_given != cfg.model.num_dense_layers:
+        log.critical(
+            "Must provide the number of filters to use for each layer,"
+            "i.e., len(filters) == num_conv_layers in model config. Got:\n"
+            f"Number of filters:\t{neurons_given}\n"
+            f"Number of Conv Layers:\t{cfg.model.num_dense_layers}")
+        
+        raise ValueError(
+            "Must provide the number of filters to use for each layer,"
+            "i.e., len(filters) == num_conv_layers in model config. Got:\n"
+            f"Number of filters:\t{filters_given}\n"
+            f"Number of Conv Layers:\t{cfg.model.num_conv_layers}"
+        )
 
 
 def convert_paths(cfg: DictConfig) -> DictConfig:

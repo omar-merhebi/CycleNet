@@ -199,42 +199,42 @@ def check_config(cfg: DictConfig):
         raise ValueError(
             'filters configuration for the model should be a list,'
             f'not {type(cfg.model.filters)}')
-        
+
     if filters_given != cfg.model.num_conv_layers:
         log.critical(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{filters_given}\n"
             f"Number of Conv Layers:\t{cfg.model.num_conv_layers}")
-        
+
         raise ValueError(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{filters_given}\n"
             f"Number of Conv Layers:\t{cfg.model.num_conv_layers}"
         )
-        
+
     try:
         neurons_given = len(cfg.model.dense_neurons)
-        
+
     except TypeError:
         log.critical(
             "Dense layer neuron configuration for the model should be a list,"
             f"not {type(cfg.model.dense_neurons)}"
         )
-        
+
         raise ValueError(
             "Dense layer neuron configuration for the model should be a list,"
             f"not {type(cfg.model.dense_neurons)}"
         )
-        
+
     if neurons_given != cfg.model.num_dense_layers:
         log.critical(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{neurons_given}\n"
             f"Number of Conv Layers:\t{cfg.model.num_dense_layers}")
-        
+
         raise ValueError(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"

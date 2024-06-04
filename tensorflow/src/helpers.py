@@ -5,7 +5,7 @@ import numpy as np
 import os
 import tensorflow as tf
 
-from datetime import date
+from datetime import datetime
 from collections.abc import Mapping
 from omegaconf import DictConfig
 from pathlib import Path
@@ -14,10 +14,19 @@ from typing import Union
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
-TODAY = date.today().strftime('%Y-%m-%d')
+TODAY = datetime.now()
 CMAP = plt.cm.viridis
 
 log = logging.getLogger(__name__)
+
+
+class ConfigError(Exception):
+    """
+    Exception raised for errors in the configuration.
+    """
+    def __init__(self, message) -> None:
+        self.message = message
+        super().__init__(self.message)
 
 
 def log_cfg(cfg: DictConfig) -> None:
@@ -29,7 +38,8 @@ def log_cfg(cfg: DictConfig) -> None:
 
     pretty_cfg = json.dumps(cfg, indent=4)
 
-    log.info(f'Loaded Config:\n{pretty_cfg}')
+    log.info('----------------------Loaded Config----------------------')
+    log.info(f'{pretty_cfg}')
 
 
 def log_env_details(cpus: int, gpus: int, total_mem: int) -> None:
@@ -58,7 +68,10 @@ def test_gpu(force_gpu: bool = False) -> None:
         if force_gpu:
             log.critical("Execution terminated: failed to detect GPU, but "
                          "force_gpu is set to True.")
-            raise RuntimeError
+            raise RuntimeError(
+                "Execution terminated: failed to detect GPU, but "
+                "force_gpu is set to True."
+            )
 
         else:
             log.warning("Failed to detect GPU. Using CPU instead.")
@@ -85,7 +98,7 @@ def convert_tensor_to_image(img_tensor: tf.Tensor) -> Image:
             'Attempted conversion of image to tensor with non-2D shape.\n'
             f'Invalid image shape: {img_arr.shape}.')
 
-        raise ValueError(
+        raise ConfigError(
             'Attempted conversion of image to tensor with non-2D shape.\n'
             f'Invalid image shape: {img_arr.shape}.')
 
@@ -154,39 +167,39 @@ def check_config(cfg: DictConfig):
 
     if not cfg.dataset:
         log.critical('No dataset configuarion found.')
-        raise ValueError('No dataset configuration found.')
+        raise ConfigError('No dataset configuration found.')
 
     if not cfg.dataset.data_dir:
         log.critical('No data directory found.')
-        raise ValueError('No data directory found.')
+        raise ConfigError('No data directory found.')
 
     if not cfg.dataset.splits:
         log.critical('No splits configuation found.')
-        raise ValueError('No splits configuration found.')
+        raise ConfigError('No splits configuration found.')
 
     if cfg.dataset.mask:
         if cfg.dataset.mask not in ['nuc', 'cell']:
             log.critical(f'Invalid mask name: {cfg.dataset.mask}')
-            raise ValueError(f'Invalid mask name: {cfg.dataset.mask}')
+            raise ConfigError(f'Invalid mask name: {cfg.dataset.mask}')
 
     total_split = 0
     for (k, v) in cfg.dataset.splits.items():
         if not v:
             log.critical('No value found for split {k}.')
-            raise ValueError(f'No value found for split {k}.')
+            raise ConfigError(f'No value found for split {k}.')
 
         if k not in split_names:
             log.critical(f'Invalid split name: {k}.'
                          f'Must be one of: {split_names}.')
 
-            raise ValueError(f'Invalid split name: {k}.'
-                             f'Must be one of: {split_names}.')
+            raise ConfigError(f'Invalid split name: {k}.'
+                              f'Must be one of: {split_names}.')
 
         total_split += v
 
     if total_split != 1:
         log.critical('Split values must sum to 1.')
-        raise ValueError('Split values must sum to 1.')
+        raise ConfigError('Split values must sum to 1.')
 
     try:
         filters_given = len(cfg.model.filters)
@@ -196,18 +209,18 @@ def check_config(cfg: DictConfig):
             'Filters configuration for the model should be a list,'
             f'not {type(cfg.model.filters)}')
 
-        raise ValueError(
+        raise ConfigError(
             'filters configuration for the model should be a list,'
             f'not {type(cfg.model.filters)}')
 
-    if filters_given != cfg.model.num_conv_layers:
+    if filters_given != cfg.model.num_conv_layers + 1:
         log.critical(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{filters_given}\n"
             f"Number of Conv Layers:\t{cfg.model.num_conv_layers}")
 
-        raise ValueError(
+        raise ConfigError(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{filters_given}\n"
@@ -223,7 +236,7 @@ def check_config(cfg: DictConfig):
             f"not {type(cfg.model.dense_neurons)}"
         )
 
-        raise ValueError(
+        raise ConfigError(
             "Dense layer neuron configuration for the model should be a list,"
             f"not {type(cfg.model.dense_neurons)}"
         )
@@ -235,7 +248,7 @@ def check_config(cfg: DictConfig):
             f"Number of filters:\t{neurons_given}\n"
             f"Number of Conv Layers:\t{cfg.model.num_dense_layers}")
 
-        raise ValueError(
+        raise ConfigError(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{filters_given}\n"

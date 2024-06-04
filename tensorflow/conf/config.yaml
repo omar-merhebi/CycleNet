@@ -22,7 +22,7 @@ wandb:
 
 hydra:
   run:
-    dir: .
+    dir: 'logs/${model.name}/${now:%Y-%m-%d}/'
   output_subdir: null
   job_logging:
     formatters:
@@ -33,6 +33,10 @@ hydra:
         class: logging.StreamHandler
         formatter: simple
         stream: ext://sys.stdout
+      file:
+        class: logging.FileHandler
+        formatter: simple
+        filename: ${now:%H%M%S}_${wandb.run_name}
     root:
       level: INFO
-      handlers: [console]
+      handlers: [console, file]

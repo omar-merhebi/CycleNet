@@ -4,12 +4,12 @@ name: wayne_rpe
 data_dir: data/phaser_rpe/raw/images
 labels: data/phaser_rpe/labels.csv
 channel_annotations: data/phaser_rpe/annotations.csv
-output_dir: data/phaser_rpe/results
+
 
 # Image Manipulations 
 # (order = mask > augment > fill)
 # note: not applied to val or test data
-mask: nuc # nuc, cell, or null (cell = nuc + ring, null = no mask, non-centered cells are masked out)
+mask: nuc # nuc, cell, or null (cell = nuc + ring, non-centered cells are masked out)
 augment: true
 fill: true
 

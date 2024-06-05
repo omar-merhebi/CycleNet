@@ -7,10 +7,13 @@ defaults:
 random_seed: 416
 force_gpu: true  # Will stop the program if GPU not detected
 
+model_save_path: saved_models/
+results_save_path: results/
+
 wandb:
   project: PHASER
   group: ${model.name}_${dataset.name}
-  run_name: defaults_dsktp
+  run_name: defaults_local
 
 hydra:
   run:

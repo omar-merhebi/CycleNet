@@ -15,12 +15,16 @@ log = logging.getLogger(__name__)
 
 class WayneRPEDataset(tf.keras.utils.Sequence):
     def __init__(self, cfg: DictConfig, data_idx: np.ndarray,
-                 augment: bool = False):
+                 augment: bool = False, mask: bool = False,
+                 fill: bool = False):
+        
         self.cfg = cfg
         self.data_idx = data_idx
         self.augment = augment
         self.shuffle = cfg.mode.data_shuffle
         self.batch_size = cfg.mode.batch_size
+        self.mask = mask
+        self.fill = fill
 
         channel_annotations = pd.read_csv(cfg.dataset.channel_annotations)
         channel_annotations['feature'] = (
@@ -154,7 +158,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
                  for slc in range(image.shape[-1])]
 
         # Apply masks if enabled
-        if self.cfg.dataset.mask:
+        if self.mask:
             mask_id = self.cfg.dataset.mask.lower()
 
             if mask_id == 'nuc':
@@ -169,7 +173,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
 
             image = image * tf.cast(mask, image.dtype)
 
-        if self.cfg.dataset.augment:
+        if self.augment:
             image = self._augment(image, mask=image[:, :, 62])
 
         if self.cfg.dataset.log_image:
@@ -209,7 +213,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
             # Drop all masks and use the first 55 slices
             image = image[:, :, :55]
 
-        if self.cfg.dataset.fill:
+        if self.fill:
             filled = []
             for i in range(image.shape[-1]):
                 slice_2d = image[:, :, i]

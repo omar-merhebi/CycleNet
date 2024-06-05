@@ -1,5 +1,4 @@
 name: rotation_net
-save_path: saved_models/rotation_net/
 
 # Misc
 add_regressor: false      # Adds a single neuron output to the model for pred_age

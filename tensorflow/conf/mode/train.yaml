@@ -1,5 +1,7 @@
 name: train
 
+test_data_out: data/phaser_rpe/results  # Where to save test data
+
 # Training parameters
 epochs: 20
 batch_size: 20

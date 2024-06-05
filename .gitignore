@@ -10,10 +10,13 @@ __pycache__/
 *.err
 *.out
 *.sh
+*.json
+*.wandb
+tensorflow/logs/*
+pytorch/logs/*
 pytorch/jobs/*
 pytorch/slurm/*
 pytorch/data/*
-
 tensorflow/data/*
 oem.code-workspace
 pytorch/wandb/*

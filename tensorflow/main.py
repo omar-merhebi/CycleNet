@@ -6,7 +6,8 @@ from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
 
 from src import helpers as h
-from src import run_models as rm
+from src.train import train
+
 
 PROJECT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 log = logging.getLogger(__name__)
@@ -29,7 +30,20 @@ def main(cfg: DictConfig):
     cpus, gpus, total_mem = h.get_resource_allocation()
     h.log_env_details(cpus, gpus, total_mem)
 
-    rm.run(cfg)
+    run(cfg)
+
+
+def run(cfg: DictConfig) -> None:
+    """
+    Detects which run mode to use and runs it
+    Args:
+        cfg (DictConfig): The full hydra config
+    """
+
+    mode = cfg.mode.name.lower()
+
+    if mode == 'train':
+        train(cfg)
 
 
 if __name__ == "__main__":

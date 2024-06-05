@@ -11,14 +11,6 @@ wandb:
   project: PHASER
   group: ${model.name}_${dataset.name}
   run_name: defaults_dsktp
-  tags: 
-    - ${model.name}
-    - ${dataset.name}
-    - predict_phase
-    - all_channels
-    - masking
-    - augments
-    - dont_fill
 
 hydra:
   run:
@@ -36,7 +28,7 @@ hydra:
       file:
         class: logging.FileHandler
         formatter: simple
-        filename: ${now:%H%M%S}_${wandb.run_name}
+        filename: ${now:%H%M%S}_${wandb.run_name}.log
     root:
       level: INFO
       handlers: [console, file]

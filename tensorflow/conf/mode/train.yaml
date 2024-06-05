@@ -1,8 +1,11 @@
+name: train
+
 # Training parameters
 epochs: 20
 batch_size: 20
-loss: 'CrossEntropy'
-metric: 'CategoricalAccuracy'
+loss: 'categorical_crossentropy'        # standard tf loss or custom loss
+metrics: ['categorical_accuracy']
+metric_names: ['Categorical Accuracy']  # len must match metrics
 optimizer: 'adam'
 learning_rate: 0.001
 data_shuffle: true

@@ -11,8 +11,7 @@ output_dir: data/phaser_rpe/results
 # note: not applied to val or test data
 mask: nuc # nuc, cell, or null (cell = nuc + ring, null = no mask, non-centered cells are masked out)
 augment: true
-fill:
-  enabled: true
+fill: true
 
 # Dataset Manipulation 
 balancing: up

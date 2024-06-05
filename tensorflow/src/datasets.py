@@ -10,7 +10,7 @@ from omegaconf import DictConfig
 from scipy import ndimage
 from typing import Union, Tuple
 
-logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class WayneRPEDataset(tf.keras.utils.Sequence):
@@ -209,7 +209,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
             # Drop all masks and use the first 55 slices
             image = image[:, :, :55]
 
-        if self.cfg.dataset.fill.enabled:
+        if self.cfg.dataset.fill:
             filled = []
             for i in range(image.shape[-1]):
                 slice_2d = image[:, :, i]

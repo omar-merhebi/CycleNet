@@ -24,21 +24,21 @@ def build_model(cfg: DictConfig, **kwargs) -> tf.keras.Model:
     Returns:
         tf.keras.Model: The final model
     """
-    
+
     build_type = cfg.build_type.lower()
 
     if build_type in ['cnn', 'conv']:
         model = build_cnn(cfg, **kwargs)
-        
+
     log.info("----------------------Model Summary----------------------\n\n")
-    
+
     stream = io.StringIO()
     with redirect_stdout(stream):
         model.summary()
-        
+
     model_summary = stream.getvalue()
     log.info(model_summary)
-    
+
     return model
 
 
@@ -53,7 +53,7 @@ def build_cnn(cfg: DictConfig,
         to the CNN. Defaults to tf.TensorShape([100, 100, 55]).
         num_classes (int, optional): The number of classes to output.
         Defaults to 3.
-        
+
     Returns:
         tf.keras.Model: The CNN model.
     """
@@ -140,7 +140,7 @@ def build_cnn(cfg: DictConfig,
 
     else:
         model = Model(inputs=inputs, outputs=class_out)
-    
+
     return model
 
 

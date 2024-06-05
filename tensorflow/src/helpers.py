@@ -18,6 +18,7 @@ TODAY = datetime.now()
 CMAP = plt.cm.viridis
 
 log = logging.getLogger(__name__)
+from icecream import ic
 
 
 class ConfigError(Exception):
@@ -27,6 +28,29 @@ class ConfigError(Exception):
     def __init__(self, message) -> None:
         self.message = message
         super().__init__(self.message)
+
+
+def _get_wb_tags(cfg: DictConfig) -> list:
+    """
+    Returns list of wandb tags based on the remaining config.
+    Args:
+        cfg (DictConfig): The full hydra configuration.
+
+    Returns:
+        list: List of Wandb tags.
+    """
+
+    tags = [
+        f'{cfg.dataset.name}_dataset',
+        f'augmentation_{cfg.dataset.augment}',
+        f'fill_{cfg.dataset.fill}',
+        f'mask_{cfg.dataset.mask}',
+        f'{len(cfg.dataset.channels) if cfg.dataset.channels else 55}' +
+        '_channels',
+        f'{cfg.dataset.balancing}_balancing'
+    ]
+
+    return tags
 
 
 def log_cfg(cfg: DictConfig) -> None:

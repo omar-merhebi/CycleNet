@@ -6,7 +6,7 @@ from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
 
 from src import helpers as h
-from src import model_builder
+from src import run_models as rm
 
 PROJECT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 log = logging.getLogger(__name__)
@@ -29,10 +29,7 @@ def main(cfg: DictConfig):
     cpus, gpus, total_mem = h.get_resource_allocation()
     h.log_env_details(cpus, gpus, total_mem)
 
-    model_cfg = cfg.model
-
-    # // TODO: train script
-    model = model_builder.build_model(model_cfg)
+    rm.run(cfg)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, \
     AveragePooling2D, MaxPool2D, Flatten, Input
 
-from .helpers import ConfigError
+from .helpers import _log_config_error
 
 log = logging.getLogger(__name__)
 
@@ -66,13 +66,7 @@ def build_cnn(cfg: DictConfig,
         num_dense_layers = int(cfg.num_dense_layers)
 
     except TypeError:
-        log.critical(
-            'Number of Convolutional/Dense layers must be a number, got:\n'
-            f'Type of N Conv Layers:\t{type(num_conv_layers)}\n'
-            f'Type of N Dense Layers\t{type(num_dense_layers)}'
-            )
-
-        raise ConfigError(
+        _log_config_error(
             'Number of Convolutional/Dense layers must be a number, got:\n'
             f'Type of N Conv Layers:\t{type(num_conv_layers)}\n'
             f'Type of N Dense Layers\t{type(num_dense_layers)}'
@@ -160,6 +154,5 @@ def _get_pool_partial(pool_type: str = "avg", **kwargs):
 
     if pool_type in ['max', 'maximum']:
         return partial(MaxPool2D, **kwargs)
-
-    log.critical(f'Invalid pool type: {pool_type}')
-    raise ConfigError(f'Invalid pool type: {pool_type}')
+    
+    _log_config_error(f'Invalid pool type: {pool_type}')

@@ -12,6 +12,8 @@ from pathlib import Path
 from PIL import Image
 from typing import Union
 
+from .train import train
+
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
 TODAY = datetime.now()
@@ -28,6 +30,31 @@ class ConfigError(Exception):
     def __init__(self, message) -> None:
         self.message = message
         super().__init__(self.message)
+
+
+def _log_config_error(message: str) -> None:
+    """
+    Logs a critical configuration error.
+    Args:
+        message (str): The message to log
+    """
+
+    log.critical(message)
+
+    raise ConfigError(message)
+
+
+def run(cfg: DictConfig) -> None:
+    """
+    Detects which run mode to use and runs it
+    Args:
+        cfg (DictConfig): The full hydra config
+    """
+
+    mode = cfg.mode.name.lower()
+
+    if mode == 'train':
+        train(cfg)
 
 
 def _get_wb_tags(cfg: DictConfig) -> list:
@@ -90,13 +117,9 @@ def test_gpu(force_gpu: bool = False) -> None:
 
     if not tf.test.is_gpu_available:
         if force_gpu:
-            log.critical("Execution terminated: failed to detect GPU, but "
-                         "force_gpu is set to True.")
-            raise RuntimeError(
+            _log_config_error(
                 "Execution terminated: failed to detect GPU, but "
-                "force_gpu is set to True."
-            )
-
+                "force_gpu is set to True.")
         else:
             log.warning("Failed to detect GPU. Using CPU instead.")
 
@@ -118,13 +141,10 @@ def convert_tensor_to_image(img_tensor: tf.Tensor) -> Image:
     img_arr = img_arr.squeeze()
 
     if len(img_arr.shape) != 2:
-        log.critical(
+        _log_config_error(
             'Attempted conversion of image to tensor with non-2D shape.\n'
-            f'Invalid image shape: {img_arr.shape}.')
-
-        raise ConfigError(
-            'Attempted conversion of image to tensor with non-2D shape.\n'
-            f'Invalid image shape: {img_arr.shape}.')
+            f'Invalid image shape: {img_arr.shape}.'
+        )
 
     img_min = img_arr.min()
     img_max = img_arr.max()
@@ -190,61 +210,45 @@ def check_config(cfg: DictConfig):
     split_names = ['train', 'val', 'test']
 
     if not cfg.dataset:
-        log.critical('No dataset configuarion found.')
-        raise ConfigError('No dataset configuration found.')
+        _log_config_error('No dataset configuarion found.')
 
     if not cfg.dataset.data_dir:
-        log.critical('No data directory found.')
-        raise ConfigError('No data directory found.')
+        _log_config_error('No data directory found.')
 
     if not cfg.dataset.splits:
-        log.critical('No splits configuation found.')
-        raise ConfigError('No splits configuration found.')
+        _log_config_error('No splits configuation found.')
 
     if cfg.dataset.mask:
         if cfg.dataset.mask not in ['nuc', 'cell']:
-            log.critical(f'Invalid mask name: {cfg.dataset.mask}')
-            raise ConfigError(f'Invalid mask name: {cfg.dataset.mask}')
+            _log_config_error(f'Invalid mask name: {cfg.dataset.mask}')
 
     total_split = 0
     for (k, v) in cfg.dataset.splits.items():
         if not v:
-            log.critical('No value found for split {k}.')
-            raise ConfigError(f'No value found for split {k}.')
+            _log_config_error(f'No value found for split {k}.')
 
         if k not in split_names:
-            log.critical(f'Invalid split name: {k}.'
-                         f'Must be one of: {split_names}.')
-
-            raise ConfigError(f'Invalid split name: {k}.'
-                              f'Must be one of: {split_names}.')
+            _log_config_error(
+                f'Invalid split name: {k}.'
+                f'Must be one of: {split_names}.'
+            )
 
         total_split += v
 
     if total_split != 1:
-        log.critical('Split values must sum to 1.')
-        raise ConfigError('Split values must sum to 1.')
+        _log_config_error('Split values must sum to 1.')
 
     try:
         filters_given = len(cfg.model.filters)
 
     except TypeError:
-        log.critical(
+        _log_config_error(
             'Filters configuration for the model should be a list,'
-            f'not {type(cfg.model.filters)}')
-
-        raise ConfigError(
-            'filters configuration for the model should be a list,'
-            f'not {type(cfg.model.filters)}')
+            f'not {type(cfg.model.filters)}'
+        )
 
     if filters_given != cfg.model.num_conv_layers + 1:
-        log.critical(
-            "Must provide the number of filters to use for each layer,"
-            "i.e., len(filters) == num_conv_layers in model config. Got:\n"
-            f"Number of filters:\t{filters_given}\n"
-            f"Number of Conv Layers:\t{cfg.model.num_conv_layers}")
-
-        raise ConfigError(
+        _log_config_error(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{filters_given}\n"
@@ -255,30 +259,17 @@ def check_config(cfg: DictConfig):
         neurons_given = len(cfg.model.dense_neurons)
 
     except TypeError:
-        log.critical(
-            "Dense layer neuron configuration for the model should be a list,"
-            f"not {type(cfg.model.dense_neurons)}"
-        )
-
-        raise ConfigError(
+        _log_config_error(
             "Dense layer neuron configuration for the model should be a list,"
             f"not {type(cfg.model.dense_neurons)}"
         )
 
     if neurons_given != cfg.model.num_dense_layers:
-        log.critical(
+        _log_config_error(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{neurons_given}\n"
             f"Number of Conv Layers:\t{cfg.model.num_dense_layers}")
-
-        raise ConfigError(
-            "Must provide the number of filters to use for each layer,"
-            "i.e., len(filters) == num_conv_layers in model config. Got:\n"
-            f"Number of filters:\t{filters_given}\n"
-            f"Number of Conv Layers:\t{cfg.model.num_conv_layers}"
-        )
-
 
 def convert_paths(cfg: DictConfig) -> DictConfig:
     """

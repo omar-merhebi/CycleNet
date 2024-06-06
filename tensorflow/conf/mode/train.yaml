@@ -4,7 +4,7 @@ test_data_out: data/phaser_rpe/results  # Where to save test data
 
 # Training parameters
 epochs: 20
-batch_size: 20
+batch_size: 1
 loss: 'categorical_crossentropy'        # standard tf loss or custom loss
 metrics: ['categorical_accuracy']
 metric_names: ['Categorical Accuracy']  # len must match metrics

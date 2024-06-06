@@ -153,7 +153,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
                 filled.append(filled_slice)
 
             image = tf.stack(filled, axis=-1)
-
+            
         return image, phase_lab
 
     def _fill_zeros(self, image: tf.Tensor,

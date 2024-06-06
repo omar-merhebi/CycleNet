@@ -11,7 +11,7 @@ channels: null # Which channels to use in the dataset (features from annotations
 # Dataset/image manipulation args
 args:
   train:
-    split: 0.8
+    split: 0.01
     shuffle: true
     balancing: up
     mask: nuc # nuc, cell, or null (cell = nuc + ring, non-centered cells are masked out)
@@ -20,7 +20,7 @@ args:
     log_image: DNA1
 
   val:
-    split: 0.1
+    split: 0.01
     shuffle: false
     balancing: null
     mask: nuc
@@ -29,7 +29,7 @@ args:
     log_image: DNA1
 
   test:
-    split: 0.1
+    split: 0.98
     shuffle: false
     balancing: null
     mask: nuc

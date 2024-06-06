@@ -43,7 +43,7 @@ def train(cfg: DictConfig) -> None:
     splits = _get_splits(cfg.dataset.args)
 
     # Create datasets
-    train_idx, test_idx, val_idx = _create_splits(
+    train_idx, val_idx, test_idx = _create_splits(
         splits=splits,
         data_len=data_len)
     
@@ -279,7 +279,8 @@ def _check_train_cfg(cfg: DictConfig) -> None:
 
 def _dataset_generator(dataset):
     for i in range(len(dataset)):
-        yield dataset[i]
+        data = dataset[i]
+        yield data
 
 
 def _create_tf_dataset(dataset, in_shape, out_shape, batch_size):

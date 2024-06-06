@@ -1,6 +1,7 @@
 extensions.json
 *.png
 *.tif
+*.keras
 .gitkeep
 __pycache__
 __pycache__/

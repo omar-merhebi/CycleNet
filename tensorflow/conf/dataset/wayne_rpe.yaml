@@ -6,21 +6,34 @@ labels: data/phaser_rpe/labels.csv
 channel_annotations: data/phaser_rpe/annotations.csv
 
 
-# Image Manipulations 
-# (order = mask > augment > fill)
-# note: not applied to val or test data
-mask: nuc # nuc, cell, or null (cell = nuc + ring, non-centered cells are masked out)
-augment: true
-fill: true
+channels: null # Which channels to use in the dataset (features from annotations.csv), same for all dataset splits.
 
-# Dataset Manipulation 
-balancing: up
-splits: 
-  train: 0.8
-  val: 0.1
-  test: 0.1
-channels: null # list of channels to use (names not indices, check annotations.csv). If null uses channels [0 to 55)
+# Dataset/image manipulation args
+args:
+  train:
+    split: 0.8
+    shuffle: true
+    balancing: up
+    mask: nuc # nuc, cell, or null (cell = nuc + ring, non-centered cells are masked out)
+    augment: true
+    fill: true
+    log_image: DNA1
 
-# For logging purposes
-log_image: DNA1
+  val:
+    split: 0.1
+    shuffle: false
+    balancing: null
+    mask: nuc
+    augment: false
+    fill: true
+    log_image: DNA1
+
+  test:
+    split: 0.1
+    shuffle: false
+    balancing: null
+    mask: nuc
+    augment: false
+    fill: true
+    log_image: DNA1
 

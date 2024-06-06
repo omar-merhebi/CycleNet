@@ -8,10 +8,20 @@ batch_size: 20
 loss: 'categorical_crossentropy'        # standard tf loss or custom loss
 metrics: ['categorical_accuracy']
 metric_names: ['Categorical Accuracy']  # len must match metrics
+
 optimizer: 'adam'
-learning_rate: 0.001
-data_shuffle: true
+optimizer_args:
+  adam:
+    learning_rate: 0.001
+    beta_1: 0.9
+    beta_2: 0.999
+    epsilon: 1e-7
+
+  sgd:
+    learning_rate: 0.01
+    momentum: 0.9
 
 early_stopping:
   enabled: true
+  monitor: val_loss
   patience: 3

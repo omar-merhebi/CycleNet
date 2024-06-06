@@ -11,22 +11,19 @@ from scipy import ndimage
 from typing import Union, Tuple
 
 log = logging.getLogger(__name__)
+from icecream import ic
 
 
 class WayneRPEDataset(tf.keras.utils.Sequence):
-    def __init__(self, cfg: DictConfig, data_idx: np.ndarray,
-                 augment: bool = False, mask: bool = False,
-                 fill: bool = False):
-        
-        self.cfg = cfg
-        self.data_idx = data_idx
-        self.augment = augment
-        self.shuffle = cfg.mode.data_shuffle
-        self.batch_size = cfg.mode.batch_size
-        self.mask = mask
-        self.fill = fill
+    def __init__(self, data_cfg: DictConfig, args: DictConfig,
+                 data_idx: np.ndarray, batch_size: int):
 
-        channel_annotations = pd.read_csv(cfg.dataset.channel_annotations)
+        self.cfg = data_cfg
+        self.data_idx = data_idx
+        self.batch_size = batch_size
+        self.args = args
+
+        channel_annotations = pd.read_csv(self.cfg.channel_annotations)
         channel_annotations['feature'] = (
             channel_annotations['feature'].apply(lambda x: x.lower().strip()))
 
@@ -34,21 +31,21 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
 
         self.channels = (
             [channel.lower().strip()
-             for channel in self.cfg.dataset.channels]
-            if self.cfg.dataset.channels else None)
+             for channel in self.cfg.channels]
+            if self.cfg.channels else None)
 
-        self.log_image = [self.cfg.dataset.log_image.lower().strip()]
+        self.log_image = [self.args.log_image.lower().strip()]
         self.input_channels = (len(self.channels)
                                if self.channels else 55)
 
-        labels = pd.read_csv(cfg.dataset.labels)
+        labels = pd.read_csv(self.cfg.labels)
         labels['phase_index'], self.unique_phases = (
             pd.factorize(labels['pred_phase']))
 
         labels = labels.iloc[self.data_idx].reset_index(drop=True)
 
-        if self.cfg.dataset.balancing:
-            balancing = self.cfg.dataset.balancing.lower()
+        if self.args.balancing:
+            balancing = self.args.balancing.lower()
             class_counts = Counter(labels['pred_phase'])
             if 'over' in balancing or 'up' in balancing:
                 target = class_counts['G1']
@@ -65,71 +62,24 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
 
             labels = pd.concat([labels_g1, labels_s, labels_g2])
 
-            labels_onehot = pd.get_dummies(labels['pred_phase'])
+        labels_onehot = pd.get_dummies(labels['pred_phase'])
 
-            self.n_classes = labels_onehot.shape[1]
+        self.n_classes = labels_onehot.shape[1]
 
-            labels = labels.join(labels_onehot)
+        self.labels = pd.concat([labels, labels_onehot], axis=1)
 
-            self.labels = labels
+        self.indexes = np.arange(labels.shape[0])
 
-            self.indexes = np.arange(labels.shape[0])
-
-            self.on_epoch_end()
+        self.on_epoch_end()
 
     def on_epoch_end(self):
-        if self.shuffle:
+        if self.args.shuffle:
             np.random.shuffle(self.indexes)
 
     def __len__(self) -> int:
-        return self.labels.shape[0] // self.cfg.mode.batch_size
+        return self.labels.shape[0] // self.batch_size
 
-    def __getitem__(self, idx):
-        indexes = self.indexes[idx *
-                               self.batch_size:(idx + 1) *
-                               self.batch_size]
-
-        # Pre-allocate batch tensors
-        batch_images = np.zeros((self.batch_size,
-                                 *self._data_generation(indexes[0])[0].shape),
-                                dtype=np.float32)
-        batch_phase_lab = np.zeros((self.batch_size, self.n_classes),
-                                   dtype=np.float32)
-        batch_age_lab = np.zeros((self.batch_size, ), dtype=np.float32)
-        batch_cell_id = []
-
-        if self.cfg.dataset.log_image:
-            log_image_shape = self._data_generation(indexes[0])[3].shape
-            batch_log_images = np.zeros((self.batch_size, *log_image_shape),
-                                        dtype=np.float32)
-
-        else:
-            batch_log_images = None
-
-        for i, ind in enumerate(indexes):
-            image, phase_lab, age_lab, log_image, cell_id = (
-                self._data_generation(ind))
-
-            batch_images[i] = image
-            batch_phase_lab[i] = phase_lab
-            batch_age_lab[i] = age_lab
-            batch_cell_id.append(cell_id)
-            if self.cfg.dataset.log_image:
-                batch_log_images[i] = log_image
-
-        # Convert to tensors
-        batch_images = tf.convert_to_tensor(batch_images)
-        batch_phase_lab = tf.convert_to_tensor(batch_phase_lab)
-        batch_age_lab = tf.convert_to_tensor(batch_age_lab)
-
-        if self.cfg.dataset.log_image:
-            batch_log_images = tf.convert_to_tensor(batch_log_images)
-
-        return (batch_images, batch_phase_lab,
-                batch_age_lab, batch_log_images,
-                batch_cell_id)
-
-    def _data_generation(self, idx: int) -> Tuple[tf.Tensor, tf.Tensor]:
+    def __getitem__(self, idx: int) -> Tuple[tf.Tensor, tf.Tensor]:
         """
         Returns the data tensor from the dataset as well as a log image
         (as defined in config).
@@ -139,12 +89,10 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
             Tuple[tf.Tensor, tf.Tensor]: the image to use and the log image
         """
         image_pth = (
-            self.cfg.dataset.data_dir /
+            self.cfg.data_dir /
             f'{self.labels.iloc[idx]["cell_id"]}.tif')
 
         phase_lab = self.labels.iloc[idx][["G1", "S", "G2"]].values
-        age_lab = self.labels.iloc[idx]["pred_age"]
-        cell_id = self.labels.iloc[idx]["cell_id"]
 
         image = tiff.imread(image_pth)
         image = normalize_image(image)
@@ -158,8 +106,8 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
                  for slc in range(image.shape[-1])]
 
         # Apply masks if enabled
-        if self.mask:
-            mask_id = self.cfg.dataset.mask.lower()
+        if self.args.mask:
+            mask_id = self.args.mask.lower()
 
             if mask_id == 'nuc':
                 mask_idx = 60
@@ -173,28 +121,11 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
 
             image = image * tf.cast(mask, image.dtype)
 
-        if self.augment:
+        if self.args.augment:
             image = self._augment(image, mask=image[:, :, 62])
 
-        if self.cfg.dataset.log_image:
-            channel_idx = list(
-                set(self.channel_annotations[
-                    self.channel_annotations['feature'].isin(self.log_image)
-                ]['frame'].tolist()))
-
-            assert len(channel_idx) == 1, (
-                'Can only log one image to wandb,'
-                f'found {len(channel_idx)} images')
-
-            channel_idx = int(channel_idx[0])
-
-            log_image = image[:, :, channel_idx]
-
-        else:
-            log_image = None
-
-        if self.cfg.dataset.channels:
-            use_channels = self.cfg.dataset.channels.lower()
+        if self.cfg.channels:
+            use_channels = self.cfg.channels.lower()
             channel_idx = list(
                 set(self.channel_annotations[
                     self.channel_annotations['feature'].isin(self.log_image)
@@ -213,7 +144,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
             # Drop all masks and use the first 55 slices
             image = image[:, :, :55]
 
-        if self.fill:
+        if self.args.fill:
             filled = []
             for i in range(image.shape[-1]):
                 slice_2d = image[:, :, i]
@@ -223,7 +154,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
 
             image = tf.stack(filled, axis=-1)
 
-        return image, phase_lab, age_lab, log_image, cell_id
+        return image, phase_lab
 
     def _fill_zeros(self, image: tf.Tensor,
                     mean: float, stddev: float) -> tf.Tensor:
@@ -352,7 +283,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
 
         return image
 
-
+    
 def get_min_max_axis(img: tf.Tensor) -> Tuple[int, int, int, int]:
     """
     Finds the extreme points of a binary mask along the x and y axes.

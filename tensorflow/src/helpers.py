@@ -1,8 +1,9 @@
-import matplotlib.pyplot as plt
 import json
 import logging
+import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pandas as pd
 import tensorflow as tf
 
 from datetime import datetime
@@ -29,6 +30,23 @@ class ConfigError(Exception):
     def __init__(self, message) -> None:
         self.message = message
         super().__init__(self.message)
+
+
+def _get_dataset_length(labels_csv: Union[str, Path]) -> int:
+    """
+    Checks the length of the dataset provided
+    Args:
+        labels_csv (Union[str, Path]): The CSV file containing the
+        dataset labels.
+
+    Returns:
+        int: The length of the dataset.
+    """
+    labels_csv = str(labels_csv)
+
+    labels_csv = pd.read_csv(labels_csv)
+
+    return len(labels_csv)
 
 
 def generate_save_path(parent_dir: Union[str, Path],
@@ -72,6 +90,7 @@ def generate_save_path(parent_dir: Union[str, Path],
 
     return save_path
 
+
 def log_config_error(message: str) -> None:
     """
     Logs a critical configuration error.
@@ -94,15 +113,7 @@ def _get_wb_tags(cfg: DictConfig) -> list:
         list: List of Wandb tags.
     """
 
-    tags = [
-        f'{cfg.dataset.name}_dataset',
-        f'augmentation_{cfg.dataset.augment}',
-        f'fill_{cfg.dataset.fill}',
-        f'mask_{cfg.dataset.mask}',
-        f'{len(cfg.dataset.channels) if cfg.dataset.channels else 55}' +
-        '_channels',
-        f'{cfg.dataset.balancing}_balancing'
-    ]
+    tags = []
 
     return tags
 
@@ -234,36 +245,11 @@ def check_config(cfg: DictConfig):
         cfg (DictConfig): The configuration object
     """
 
-    split_names = ['train', 'val', 'test']
-
     if not cfg.dataset:
         log_config_error('No dataset configuarion found.')
 
     if not cfg.dataset.data_dir:
         log_config_error('No data directory found.')
-
-    if not cfg.dataset.splits:
-        log_config_error('No splits configuation found.')
-
-    if cfg.dataset.mask:
-        if cfg.dataset.mask not in ['nuc', 'cell']:
-            log_config_error(f'Invalid mask name: {cfg.dataset.mask}')
-
-    total_split = 0
-    for (k, v) in cfg.dataset.splits.items():
-        if not v:
-            log_config_error(f'No value found for split {k}.')
-
-        if k not in split_names:
-            log_config_error(
-                f'Invalid split name: {k}.'
-                f'Must be one of: {split_names}.'
-            )
-
-        total_split += v
-
-    if total_split != 1:
-        log_config_error('Split values must sum to 1.')
 
     try:
         filters_given = len(cfg.model.filters)

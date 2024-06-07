@@ -16,8 +16,8 @@ from icecream import ic
 
 class WayneRPEDataset(tf.keras.utils.Sequence):
     def __init__(self, data_cfg: DictConfig, args: DictConfig,
-                 data_idx: np.ndarray, batch_size: int):
-
+                 data_idx: np.ndarray, batch_size: int, **kwargs):
+        super().__init__(**kwargs)
         self.cfg = data_cfg
         self.data_idx = data_idx
         self.batch_size = batch_size
@@ -78,23 +78,22 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
 
     def __len__(self) -> int:
         return self.labels.shape[0] // self.batch_size
-    
+
     def __getitem__(self, idx: int):
         batch_idx = (
             self.indexes[idx * self.batch_size:(idx + 1) * self.batch_size])
 
         images = [None] * len(batch_idx)
         labels = [None] * len(batch_idx)
-        
+
         for i, batch_ind in enumerate(batch_idx):
             image, label = self.data_generation(batch_ind)
             images[i] = image
             labels[i] = label
-            
+
         images = tf.convert_to_tensor(images, dtype=tf.float32)
         labels = tf.convert_to_tensor(labels, dtype=tf.int32)
         return images, labels
-
 
     def data_generation(self, idx: int) -> Tuple[tf.Tensor, tf.Tensor]:
         """

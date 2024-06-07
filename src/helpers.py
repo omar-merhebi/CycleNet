@@ -5,23 +5,20 @@ import numpy as np
 import os
 import pandas as pd
 import tensorflow as tf
+import wandb as wb
 
 from datetime import datetime
 from collections.abc import Mapping
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 from pathlib import Path
 from PIL import Image
-from typing import Union
+from typing import Union, Optional
 
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
 TODAY = datetime.now()
 CMAP = plt.cm.viridis
-
-log = logging.getLogger(__name__)
-from icecream import ic
-
 
 class ConfigError(Exception):
     """
@@ -30,6 +27,22 @@ class ConfigError(Exception):
     def __init__(self, message) -> None:
         self.message = message
         super().__init__(self.message)
+
+
+def init_wandb(cfg: DictConfig) -> None:
+    """
+    Initializes Weights & Biases
+    Args:
+        cfg (DictConfig): The full config
+    """
+
+    wb.init(
+        project=cfg.wandb.project,
+        name=cfg.wandb.run_name,
+        group=cfg.wandb.group,
+        config=OmegaConf.to_container(cfg),
+        entity='oem'
+    )
 
 
 def _get_dataset_length(labels_csv: Union[str, Path]) -> int:
@@ -47,6 +60,50 @@ def _get_dataset_length(labels_csv: Union[str, Path]) -> int:
     labels_csv = pd.read_csv(labels_csv)
 
     return len(labels_csv)
+
+
+def _check_leakage(**kwargs: Optional[np.ndarray]):
+    """
+    Takes np.ndarrays for dataset indicies and finds if there is an
+    intersection for any of them.
+    """
+
+    sets = {
+        name: set(idx) if idx is not None else set()
+        for name, idx in kwargs.items()
+    }
+
+    names = list(sets.keys())
+
+    print('Checking for data leakage...')
+
+    leaks = False
+    for i in range(len(names)):
+        for j in range(i+1, len(names)):
+            intersection = sets[names[i]] & sets[names[j]]
+
+            if not intersection == set():
+                leaks = True
+                print('Data Leakage detected in dataset indices:'
+                      f'{names[i]} and {names[j]}')
+
+    if not leaks:
+        print('No data leakage found.')
+
+    print('Finished data leakage check.')
+
+
+def _get_splits(dataset_args: DictConfig) -> list:
+    """
+    Looks at the datasets and their arguments and gets a list of splits.
+    Args:
+        dataset_args (DictConfig): from cfg.dataset.args
+
+    Returns:
+        list: list of split values
+    """
+
+    return [dataset_args[arg]['split'] for arg in dataset_args]
 
 
 def generate_save_path(parent_dir: Union[str, Path],
@@ -91,18 +148,6 @@ def generate_save_path(parent_dir: Union[str, Path],
     return save_path
 
 
-def log_config_error(message: str) -> None:
-    """
-    Logs a critical configuration error.
-    Args:
-        message (str): The message to log
-    """
-
-    log.critical(message)
-
-    raise ConfigError(message)
-
-
 def log_cfg(cfg: DictConfig) -> None:
     """
     Logs the Hydra configuration.
@@ -112,8 +157,8 @@ def log_cfg(cfg: DictConfig) -> None:
 
     pretty_cfg = json.dumps(cfg, indent=4)
 
-    log.info('----------------------Loaded Config----------------------')
-    log.info(f'{pretty_cfg}')
+    print('----------------------Loaded Config----------------------')
+    print(f'{pretty_cfg}')
 
 
 def log_env_details(cpus: int, gpus: int, total_mem: int) -> None:
@@ -124,9 +169,9 @@ def log_env_details(cpus: int, gpus: int, total_mem: int) -> None:
         gpus (int): Number of GPUs
         total_mem (int): Amount of Memory in MB
     """
-    log.info(f"CPUs:\t{cpus}")
-    log.info(f"GPUs:\t{gpus}")
-    log.info(f"Available Memory:\t{total_mem} MB")
+    print(f"CPUs:\t{cpus}")
+    print(f"GPUs:\t{gpus}")
+    print(f"Available Memory:\t{total_mem} MB")
 
 
 def test_gpu(force_gpu: bool = False) -> None:
@@ -140,11 +185,11 @@ def test_gpu(force_gpu: bool = False) -> None:
 
     if not tf.test.is_gpu_available:
         if force_gpu:
-            log_config_error(
+            raise ConfigError(
                 "Execution terminated: failed to detect GPU, but "
                 "force_gpu is set to True.")
         else:
-            log.warning("Failed to detect GPU. Using CPU instead.")
+            print("Failed to detect GPU. Using CPU instead.")
 
 
 def convert_tensor_to_image(img_tensor: tf.Tensor) -> Image:
@@ -164,7 +209,7 @@ def convert_tensor_to_image(img_tensor: tf.Tensor) -> Image:
     img_arr = img_arr.squeeze()
 
     if len(img_arr.shape) != 2:
-        log_config_error(
+        raise ConfigError(
             'Attempted conversion of image to tensor with non-2D shape.\n'
             f'Invalid image shape: {img_arr.shape}.'
         )
@@ -231,22 +276,22 @@ def check_config(cfg: DictConfig):
     """
 
     if not cfg.dataset:
-        log_config_error('No dataset configuarion found.')
+        raise ConfigError('No dataset configuarion found.')
 
     if not cfg.dataset.data_dir:
-        log_config_error('No data directory found.')
+        raise ConfigError('No data directory found.')
 
     try:
         filters_given = len(cfg.model.filters)
 
     except TypeError:
-        log_config_error(
+        raise ConfigError(
             'Filters configuration for the model should be a list,'
             f'not {type(cfg.model.filters)}'
         )
 
     if filters_given != cfg.model.num_conv_layers + 1:
-        log_config_error(
+        raise ConfigError(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{filters_given}\n"
@@ -257,13 +302,13 @@ def check_config(cfg: DictConfig):
         neurons_given = len(cfg.model.dense_neurons)
 
     except TypeError:
-        log_config_error(
+        raise ConfigError(
             "Dense layer neuron configuration for the model should be a list,"
             f"not {type(cfg.model.dense_neurons)}"
         )
 
     if neurons_given != cfg.model.num_dense_layers:
-        log_config_error(
+        raise ConfigError(
             "Must provide the number of filters to use for each layer,"
             "i.e., len(filters) == num_conv_layers in model config. Got:\n"
             f"Number of filters:\t{neurons_given}\n"

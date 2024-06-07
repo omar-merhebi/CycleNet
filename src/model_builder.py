@@ -25,9 +25,9 @@ def build_model(cfg: DictConfig, **kwargs) -> tf.keras.Model:
         tf.keras.Model: The final model
     """
 
-    build_type = cfg.build_type.lower()
+    architecture = cfg.architecture.lower()
 
-    if build_type in ['cnn', 'conv']:
+    if architecture in ['cnn', 'conv']:
         model = build_cnn(cfg, **kwargs)
 
     log.info("----------------------Model Summary----------------------\n\n")
@@ -154,5 +154,5 @@ def _get_pool_partial(pool_type: str = "avg", **kwargs):
 
     if pool_type in ['max', 'maximum']:
         return partial(MaxPool2D, **kwargs)
-    
+
     log_config_error(f'Invalid pool type: {pool_type}')

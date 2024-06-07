@@ -14,26 +14,17 @@ args:
     split: 0.8
     shuffle: true
     balancing: up
-    mask: null # nuc, cell, or null (cell = nuc + ring, non-centered cells are masked out)
-    augment: false
-    fill: false
     log_image: DNA1
 
   val:
     split: 0.1
     shuffle: true
     balancing: null
-    mask: null
-    augment: false
-    fill: false
     log_image: DNA1
 
   test:
     split: 0.1
     shuffle: true
     balancing: null
-    mask: null
-    augment: false
-    fill: false
     log_image: DNA1
 

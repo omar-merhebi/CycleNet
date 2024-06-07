@@ -15,23 +15,3 @@ wandb:
   group: ${model.name}_${dataset.name}
   run_name: defaults_local
 
-hydra:
-  run:
-    dir: 'logs/${model.name}/${now:%Y-%m-%d}/'
-  output_subdir: null
-  job_logging:
-    formatters:
-      simple:
-        format: '%(asctime)s %(levelname)s: %(message)s'
-    handlers:
-      console:
-        class: logging.StreamHandler
-        formatter: simple
-        stream: ext://sys.stdout
-      file:
-        class: logging.FileHandler
-        formatter: simple
-        filename: ${now:%H%M%S}_${wandb.run_name}.log
-    root:
-      level: INFO
-      handlers: [console, file]

@@ -4,7 +4,7 @@ name: rotation_net
 add_regressor: false      # Adds a single neuron output to the model for pred_age
 
 # Model parameters
-build_type: cnn           # Tells model builder what type of model to build
+architecture: cnn           # Tells model builder what type of model to build
 num_conv_layers: 2        # Number of conv + pool layers (excluding input)
 filters: [55, 110, 220]   # Number of filters with each layer (length equal to num_conv_layers + 1)
 conv_kernel_size: 3

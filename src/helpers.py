@@ -103,21 +103,6 @@ def log_config_error(message: str) -> None:
     raise ConfigError(message)
 
 
-def _get_wb_tags(cfg: DictConfig) -> list:
-    """
-    Returns list of wandb tags based on the remaining config.
-    Args:
-        cfg (DictConfig): The full hydra configuration.
-
-    Returns:
-        list: List of Wandb tags.
-    """
-
-    tags = []
-
-    return tags
-
-
 def log_cfg(cfg: DictConfig) -> None:
     """
     Logs the Hydra configuration.

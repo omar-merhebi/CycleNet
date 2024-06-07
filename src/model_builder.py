@@ -6,9 +6,9 @@ from contextlib import redirect_stdout
 from functools import partial
 from omegaconf import DictConfig
 
-from tensorflow.keras.models import Model
+from tensorflow.keras.models import Model  # type: ignore
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, \
-    AveragePooling2D, MaxPool2D, Flatten, Input
+    AveragePooling2D, MaxPool2D, Flatten, Input  # type: ignore
 
 from .helpers import log_config_error
 

@@ -1,18 +1,14 @@
 import logging
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 import wandb as wb
 
-from omegaconf import DictConfig, ListConfig
-from pathlib import Path
+from omegaconf import DictConfig, ListConfig, OmegaConf
 from sklearn.model_selection._split import train_test_split
-from keras.callbacks import Callback # type: ignore
-from keras.preprocessing.image import array_to_img # type: ignore
-from typing import Union, Tuple, Optional
+from typing import Tuple, Optional
 
 from .datasets import WayneRPEDataset
-from .helpers import _get_wb_tags, _get_dataset_length, log_config_error, generate_save_path
+from .helpers import _get_dataset_length, log_config_error, generate_save_path
 from .model_builder import build_model
 
 from icecream import ic
@@ -47,7 +43,6 @@ def train(cfg: DictConfig) -> None:
         splits=splits,
         data_len=data_len)
 
-
     # Check for leakage
     _check_leakage(train=train_idx,
                    test=test_idx,
@@ -79,7 +74,6 @@ def train(cfg: DictConfig) -> None:
     #     out_shape=val_dataset[0][-1].shape,
     #     batch_size=cfg.mode.batch_size)
 
-
     # steps_per_epoch = len(train_dataset) // cfg.mode.batch_size
     # validation_steps = len(val_dataset) // cfg.mode.batch_size
 
@@ -98,7 +92,6 @@ def train(cfg: DictConfig) -> None:
     plt.tight_layout()
     plt.show()
 
-
     model_save_path = generate_save_path(
         cfg.model_save_path,
         model_name=cfg.model.name,
@@ -112,7 +105,8 @@ def train(cfg: DictConfig) -> None:
     wb.init(
         project=cfg.wandb.project,
         name=cfg.wandb.run_name,
-        group=cfg.wandb.group
+        group=cfg.wandb.group,
+        config=OmegaConf.to_container(cfg)
     )
 
     metrics = list(cfg.mode.metrics)

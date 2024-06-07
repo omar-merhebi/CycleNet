@@ -1,10 +1,17 @@
 name: wayne_rpe
 
+# Preprocess dataset (will save to data_dir and labels below)
+preprocess:
+  enabled: true
+  dynamic_crop: true
+  raw_images: data/phaser_rpe/raw/images
+  raw_labels: data/phaser_rpe/labels_original.csv
+
+
 # Directories
-data_dir: data/phaser_rpe/raw/images
+data_dir: data/phaser_rpe/processed/dynamic_crop
 labels: data/phaser_rpe/labels.csv
 channel_annotations: data/phaser_rpe/annotations.csv
-
 
 channels: null # Which channels to use in the dataset (features from annotations.csv), same for all dataset splits.
 

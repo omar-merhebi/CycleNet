@@ -34,7 +34,6 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
              for channel in self.cfg.channels]
             if self.cfg.channels else None)
 
-        self.log_image = [self.args.log_image.lower().strip()]
         self.input_channels = (len(self.channels)
                                if self.channels else 55)
 
@@ -67,6 +66,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
         self.n_classes = labels_onehot.shape[1]
 
         self.labels = pd.concat([labels, labels_onehot], axis=1)
+        ic(Counter(self.labels['pred_phase']))
 
         self.indexes = np.arange(labels.shape[0])
 
@@ -78,8 +78,25 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
 
     def __len__(self) -> int:
         return self.labels.shape[0] // self.batch_size
+    
+    def __getitem__(self, idx: int):
+        batch_idx = (
+            self.indexes[idx * self.batch_size:(idx + 1) * self.batch_size])
 
-    def __getitem__(self, idx: int) -> Tuple[tf.Tensor, tf.Tensor]:
+        images = [None] * len(batch_idx)
+        labels = [None] * len(batch_idx)
+        
+        for i, batch_ind in enumerate(batch_idx):
+            image, label = self.data_generation(batch_ind)
+            images[i] = image
+            labels[i] = label
+            
+        images = tf.convert_to_tensor(images, dtype=tf.float32)
+        labels = tf.convert_to_tensor(labels, dtype=tf.int32)
+        return images, labels
+
+
+    def data_generation(self, idx: int) -> Tuple[tf.Tensor, tf.Tensor]:
         """
         Returns the data tensor from the dataset as well as a log image
         (as defined in config).
@@ -92,18 +109,16 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
             self.cfg.data_dir /
             f'{self.labels.iloc[idx]["cell_id"]}.tif')
 
-        phase_lab = self.labels.iloc[idx][["G1", "S", "G2"]].values
+        phase_lab = np.array(
+            self.labels.iloc[idx][["G1", "S", "G2"]].values,
+            dtype=np.int32)
+        phase_lab = tf.convert_to_tensor(phase_lab)
 
         image = tiff.imread(image_pth)
         image = normalize_image(image)
 
         # add masks
         image = self._append_masks(image)
-
-        # get median and stdv of each dim of the image
-        outmask = 1 - image[:, :, 59]
-        stats = [self._extracellular_stats(image[:, :, slc], outmask)
-                 for slc in range(image.shape[-1])]
 
         # Apply masks if enabled
         if self.args.mask:
@@ -122,7 +137,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
             image = image * tf.cast(mask, image.dtype)
 
         if self.args.augment:
-            image = self._augment(image, mask=image[:, :, 62])
+            image = self._augment(image, image[:, :, 62])
 
         if self.cfg.channels:
             use_channels = self.cfg.channels.lower()
@@ -144,51 +159,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
             # Drop all masks and use the first 55 slices
             image = image[:, :, :55]
 
-        if self.args.fill:
-            filled = []
-            for i in range(image.shape[-1]):
-                slice_2d = image[:, :, i]
-                mean, stddev = stats[i]
-                filled_slice = self._fill_zeros(slice_2d, mean, stddev)
-                filled.append(filled_slice)
-
-            image = tf.stack(filled, axis=-1)
-            
         return image, phase_lab
-
-    def _fill_zeros(self, image: tf.Tensor,
-                    mean: float, stddev: float) -> tf.Tensor:
-        """
-        Fills in zero values provided in an image with values randomly sampled
-        from a Gaussian distrubition with the mean and stddev provided.
-        Args:
-            image (tf.Tensor): 2D image tensor with zero pixels to fill.
-            mean (float): Mean pixel value for the random sample.
-            stddev (float): Standard deviation of pixel value for the
-            random sample
-
-        Returns:
-            tf.Tensor: 2D image tensor with zero values filled in
-        """
-
-        assert len(image.shape) == 2, (
-            'Shape of the image and mask must be 2D.'
-            f'Current shape:{image.shape}'
-        )
-
-        zeros = tf.where(tf.equal(image, 0))
-
-        if tf.size(zeros) == 0:
-            logging.warning("Filling is enabled but no zero pixels found.")
-            return image
-
-        random_vals = tf.random.normal([tf.shape(zeros)[0]],
-                                       mean=mean, stddev=stddev,
-                                       dtype=image.dtype)
-
-        filled = tf.tensor_scatter_nd_update(image, zeros, random_vals)
-
-        return filled
 
     def _append_masks(self, image: tf.Tensor,
                       nuc_mask_idx: int = 57,
@@ -283,7 +254,7 @@ class WayneRPEDataset(tf.keras.utils.Sequence):
 
         return image
 
-    
+
 def get_min_max_axis(img: tf.Tensor) -> Tuple[int, int, int, int]:
     """
     Finds the extreme points of a binary mask along the x and y axes.

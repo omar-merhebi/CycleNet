@@ -46,9 +46,7 @@ def train(cfg: DictConfig) -> None:
     train_idx, val_idx, test_idx = _create_splits(
         splits=splits,
         data_len=data_len)
-    
-    steps_per_epoch = len(train_idx) // cfg.mode.batch_size
-    validation_steps = len(val_idx) // cfg.mode.batch_size
+
 
     # Check for leakage
     _check_leakage(train=train_idx,
@@ -69,21 +67,37 @@ def train(cfg: DictConfig) -> None:
         batch_size=cfg.mode.batch_size
     )
 
-    train_dataset_tf = _create_tf_dataset(
-        train_dataset,
-        in_shape=train_dataset[0][0].shape,
-        out_shape=train_dataset[0][-1].shape,
-        batch_size=cfg.mode.batch_size)
+    # train_dataset_tf = _create_tf_dataset(
+    #     train_dataset,
+    #     in_shape=train_dataset[0][0].shape,
+    #     out_shape=train_dataset[0][-1].shape,
+    #     batch_size=cfg.mode.batch_size)
 
-    val_dataset_tf = _create_tf_dataset(
-        val_dataset,
-        in_shape=val_dataset[0][0].shape,
-        out_shape=val_dataset[0][-1].shape,
-        batch_size=cfg.mode.batch_size)
+    # val_dataset_tf = _create_tf_dataset(
+    #     val_dataset,
+    #     in_shape=val_dataset[0][0].shape,
+    #     out_shape=val_dataset[0][-1].shape,
+    #     batch_size=cfg.mode.batch_size)
+
+
+    # steps_per_epoch = len(train_dataset) // cfg.mode.batch_size
+    # validation_steps = len(val_dataset) // cfg.mode.batch_size
 
     model = build_model(cfg.model,
-                        input_shape=train_dataset[0][0].shape,
+                        input_shape=train_dataset[0][0][0].shape,
                         num_classes=train_dataset.n_classes)
+    
+    import matplotlib.pyplot as plt
+    img1 = train_dataset[0][0][0][:, :, 10].numpy()
+    img2 = val_dataset[0][0][0][:, :, 10].numpy()
+
+    fig, axis = plt.subplots(1, 2)
+    axis[0].imshow(img1)
+    axis[1].imshow(img2)
+
+    plt.tight_layout()
+    plt.show()
+
 
     model_save_path = generate_save_path(
         cfg.model_save_path,
@@ -132,10 +146,14 @@ def train(cfg: DictConfig) -> None:
 
     log.info('Training model...')
 
-    hist = model.fit(train_dataset_tf, epochs=cfg.mode.epochs,
-                     validation_data=val_dataset_tf, callbacks=callbacks,
-                     steps_per_epoch=steps_per_epoch,
-                     validation_steps=validation_steps)
+    # hist = model.fit(train_dataset_tf, epochs=cfg.mode.epochs,
+    #                  validation_data=val_dataset_tf, callbacks=callbacks,
+    #                  steps_per_epoch=steps_per_epoch,
+    #                  validation_steps=validation_steps)
+
+    hist = model.fit(train_dataset, epochs=cfg.mode.epochs,
+                     validation_data=val_dataset,
+                     callbacks=callbacks)
 
     hist = hist.history
     best_epoch = hist['val_loss'].index(min(hist['val_loss'])) + 1
@@ -275,31 +293,3 @@ def _check_train_cfg(cfg: DictConfig) -> None:
             f'Invalid optimizer name: {optimizer} ,'
             f'must be one of: {OPTIMIZERS.keys}'
         )
-
-
-def _dataset_generator(dataset):
-    for i in range(len(dataset)):
-        data = dataset[i]
-        yield data
-
-
-def _create_tf_dataset(dataset, in_shape, out_shape, batch_size):
-    output_signature = (
-        tf.TensorSpec(shape=in_shape, dtype=tf.float32),
-        tf.TensorSpec(shape=out_shape)
-    )
-
-    tf_dataset = tf.data.Dataset.from_generator(
-        lambda: _dataset_generator(dataset),
-        output_signature=output_signature
-    )
-
-    tf_dataset = tf_dataset.batch(batch_size)
-    tf_dataset = tf_dataset.map(
-        lambda x, y: (x, y),
-        num_parallel_calls=tf.data.experimental.AUTOTUNE)
-
-    tf_dataset = tf_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-    tf_dataset = tf_dataset.repeat()
-
-    return tf_dataset

@@ -1,0 +1,35 @@
+name: wayne_crop
+
+# Preprocess dataset 
+
+preprocess: true
+
+raw_images: /home/omar/projects/unc/PHASER/data/phaser_rpe/raw/images
+raw_labels: /home/omar/projects/unc/PHASER/data/phaser_rpe/labels_original.csv
+channel_annot: /home/omar/projects/unc/PHASER/data/phaser_rpe/channel_annotations.csv 
+
+# Directories
+data_dir: /home/omar/projects/unc/PHASER/data/phaser_rpe/processed/dynamic_crop
+labels: /home/omar/projects/unc/PHASER/data/phaser_rpe/processed/labels.csv
+channels: /home/omar/projects/unc/PHASER/data/phaser_rpe/processed/channels_cfg.csv  # CSV file indicating which channels to use
+
+# Dataset/image manipulation args
+args:
+  train:
+    split: 0.8
+    shuffle: true
+    balancing: up
+    log_image: DNA1
+
+  val:
+    split: 0.1
+    shuffle: true
+    balancing: null
+    log_image: DNA1
+
+  test:
+    split: 0.1
+    shuffle: true
+    balancing: null
+    log_image: DNA1
+

@@ -1,5 +1,5 @@
 defaults:
-  - dataset: wayne_rpe
+  - dataset: wayne_crop
   - model: rotation_net
   - mode: train
   - _self_

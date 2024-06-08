@@ -1,15 +1,13 @@
 import json
-import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import tensorflow as tf
-import wandb as wb
 
 from datetime import datetime
 from collections.abc import Mapping
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from pathlib import Path
 from PIL import Image
 from typing import Union, Optional
@@ -20,6 +18,7 @@ PROJECT_PATH = CURRENT_PATH.parent
 TODAY = datetime.now()
 CMAP = plt.cm.viridis
 
+
 class ConfigError(Exception):
     """
     Exception raised for errors in the configuration.
@@ -27,22 +26,6 @@ class ConfigError(Exception):
     def __init__(self, message) -> None:
         self.message = message
         super().__init__(self.message)
-
-
-def init_wandb(cfg: DictConfig) -> None:
-    """
-    Initializes Weights & Biases
-    Args:
-        cfg (DictConfig): The full config
-    """
-
-    wb.init(
-        project=cfg.wandb.project,
-        name=cfg.wandb.run_name,
-        group=cfg.wandb.group,
-        config=OmegaConf.to_container(cfg),
-        entity='oem'
-    )
 
 
 def _get_dataset_length(labels_csv: Union[str, Path]) -> int:

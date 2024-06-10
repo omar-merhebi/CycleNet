@@ -47,10 +47,10 @@ def _preprocess_wayne_rpe(raw_labels: str,
     labels_proc['filepath'] = labels_proc['cell_id'].apply(
         lambda x: str(data_dir / f'{x}.npy')
     )
-    
+
     data_dir.mkdir(exist_ok=True, parents=True)
     Path(labels).parent.mkdir(exist_ok=True, parents=True)
-    
+
     # Save labels
     labels_proc.to_csv(labels, index=False)
 
@@ -60,7 +60,9 @@ def _preprocess_wayne_rpe(raw_labels: str,
 
         img_path = raw_images / f"{cell_id}.tif"
 
-        image = tiff.imread(img_path)
+        with tiff.TiffFile(img_path) as tif:
+            image = tif.asarray()
+
         image = normalize_image(image)
 
         nuc_mask = image[:, :, 57]
@@ -76,7 +78,7 @@ def _preprocess_wayne_rpe(raw_labels: str,
 
         image_np = image.numpy()
         save_path = data_dir / f'{cell_id}.npy'
-        
+
         np.save(save_path, image_np)
 
         ymin, ymax, xmin, xmax = get_min_max_axis(image[:, :, -1])
@@ -142,7 +144,8 @@ def _preprocess_wayne_rpe(raw_labels: str,
 
     channels_df['utilize'] = True
 
-    channels_df.loc[channels_df['feature'].str.contains('DNA'), 'utilize'] = False
+    channels_df.loc[
+        channels_df['feature'].str.contains('DNA'), 'utilize'] = False
     channels_df.loc[channels_df['feature'] == 'DNA1', 'utilize'] = True
     channels_df.loc[55:, 'utilize'] = False
 
@@ -159,7 +162,7 @@ def preprocess(dataset_name: str, **kwargs):
         _preprocess_wayne_rpe(dynamic_crop=True, **kwargs)
 
 
-def normalize_image(image: tf.Tensor) -> tf.Tensor:
+def normalize_image(image: np.ndarray) -> tf.Tensor:
     """
     Normalize the image so that pixel values are between 0 and 1,
     and it is of dtype tf.float32.
@@ -170,12 +173,15 @@ def normalize_image(image: tf.Tensor) -> tf.Tensor:
         tf.Tensor: The normalized image
     """
 
-    if image.dtype != tf.float32:
-        image = tf.cast(image, tf.float32)
+    image = image.astype(np.float32)
 
-    image = tf.transpose(image, perm=[1, 2, 0])
+    image /= 65535.0
 
-    return image / 65535.0
+    image = np.transpose(image, (1, 2, 0))
+
+    image_tf = tf.convert_to_tensor(image)
+
+    return image_tf
 
 
 def find_center_mask(mask: tf.Tensor) -> tf.Tensor:

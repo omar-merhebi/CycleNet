@@ -3,7 +3,7 @@ name: train
 test_data_out: data/phaser_rpe/results  # Where to save test data
 
 # Training parameters
-epochs: 20
+epochs: 10
 batch_size: 10
 loss: 'categorical_crossentropy'        # standard tf loss or custom loss
 metrics: ['categorical_accuracy']
@@ -11,15 +11,10 @@ metric_names: ['Categorical Accuracy']  # len must match metrics
 
 optimizer: 'adam'
 optimizer_args:
-  adam:
-    learning_rate: 0.001
-    beta_1: 0.9
-    beta_2: 0.999
-    epsilon: 1e-7
-
-  sgd:
-    learning_rate: 0.01
-    momentum: 0.9
+  learning_rate: 0.001
+  beta_1: 0.9
+  beta_2: 0.999
+  epsilon: 1e-7
 
 early_stopping:
   enabled: true

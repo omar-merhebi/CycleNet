@@ -11,7 +11,7 @@ channel_annot: /home/omar/projects/unc/PHASER/data/phaser_rpe/channel_annotation
 # Directories
 data_dir: /home/omar/projects/unc/PHASER/data/phaser_rpe/processed/dynamic_crop
 labels: /home/omar/projects/unc/PHASER/data/phaser_rpe/processed/labels.csv
-channels: /home/omar/projects/unc/PHASER/data/phaser_rpe/processed/channels_cfg.csv  # CSV file indicating which channels to use
+channels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 47, 49, 50, 51, 52, 53, 54]
 
 # Dataset/image manipulation args
 args:
@@ -19,17 +19,26 @@ args:
     split: 0.8
     shuffle: true
     balance: middle
-    log_image: DNA1
+    augment: false
+    mask: null
+    fill: false
+    log_image: 10
 
   val:
     split: 0.1
     shuffle: true
     balance: null
-    log_image: DNA1
+    augment: false
+    mask: null
+    fill: false
+    log_image: 10
 
   test:
     split: 0.1
     shuffle: true
     balance: null
-    log_image: DNA1
+    augment: false
+    mask: null
+    fill: false
+    log_image: 10
 

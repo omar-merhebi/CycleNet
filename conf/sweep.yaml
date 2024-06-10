@@ -1,0 +1,9 @@
+method: 'random'
+name: 'sweep'
+metric: 
+  goal: 'minimize'
+  name: 'val_loss'
+
+parameters:
+  mode.batch_size: 
+    values: [1, 5, 10, 5, 20, 25, 30, 35]

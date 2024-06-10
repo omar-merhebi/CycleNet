@@ -1,5 +1,5 @@
 defaults:
-  - dataset: wayne_crop
+  - dataset: wayne
   - model: rotation_net
   - mode: train
   - _self_
@@ -13,5 +13,6 @@ results_save_path: results/
 wandb:
   project: PHASER
   group: ${model.name}_${dataset.name}
-  run_name: defaults_local
+  name: defaults+fill
+  entity: oem
 

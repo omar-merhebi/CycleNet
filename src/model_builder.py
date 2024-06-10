@@ -1,14 +1,16 @@
-import io
-import logging
 import tensorflow as tf
 
-from contextlib import redirect_stdout
 from functools import partial
 from omegaconf import DictConfig
 
 from tensorflow.keras.models import Model  # type: ignore
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, \
     AveragePooling2D, MaxPool2D, Flatten, Input  # type: ignore
+
+OPTIMIZERS = {
+    'adam': tf.keras.optimizers.Adam,
+    'sgd': tf.keras.optimizers.SGD,
+}
 
 
 def build_model(cfg: DictConfig, **kwargs) -> tf.keras.Model:
@@ -25,13 +27,6 @@ def build_model(cfg: DictConfig, **kwargs) -> tf.keras.Model:
 
     if architecture in ['cnn', 'conv']:
         model = build_cnn(cfg, **kwargs)
-
-    stream = io.StringIO()
-    with redirect_stdout(stream):
-        model.summary()
-
-    model_summary = stream.getvalue()
-    
 
     return model
 
@@ -150,3 +145,7 @@ def _get_pool_partial(pool_type: str = "avg", **kwargs):
         return partial(MaxPool2D, **kwargs)
 
     raise ValueError(f'Invalid pool type: {pool_type}')
+
+
+def _get_optimizer(optimizer_name, **kwargs):
+    return OPTIMIZERS.get(optimizer_name)(**kwargs)

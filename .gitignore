@@ -11,6 +11,7 @@
 *.wandb
 logs/*
 data/*
+wandb/*
 extensions.json
 oem.code-workspace
 __pycache__/

@@ -2,7 +2,7 @@ name: wayne_crop
 
 # Preprocess dataset 
 
-preprocess: true
+preprocess: false
 
 raw_images: /home/omar/projects/unc/PHASER/data/phaser_rpe/raw/images
 raw_labels: /home/omar/projects/unc/PHASER/data/phaser_rpe/labels_original.csv
@@ -18,18 +18,18 @@ args:
   train:
     split: 0.8
     shuffle: true
-    balancing: up
+    balance: middle
     log_image: DNA1
 
   val:
     split: 0.1
     shuffle: true
-    balancing: null
+    balance: null
     log_image: DNA1
 
   test:
     split: 0.1
     shuffle: true
-    balancing: null
+    balance: null
     log_image: DNA1
 

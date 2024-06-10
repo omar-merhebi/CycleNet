@@ -48,10 +48,11 @@ def _preprocess_wayne_rpe(raw_labels: str,
         lambda x: str(data_dir / f'{x}.npy')
     )
     
+    data_dir.mkdir(exist_ok=True, parents=True)
+    Path(labels).parent.mkdir(exist_ok=True, parents=True)
+    
     # Save labels
     labels_proc.to_csv(labels, index=False)
-
-    data_dir.mkdir(exist_ok=True, parents=True)
 
     print('Processing and saving image masks.')
     for cell_id in tqdm(labels_proc['cell_id'], desc="Processing",

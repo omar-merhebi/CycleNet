@@ -24,6 +24,7 @@ def run_train(cfg, save_model=False):
     wb.init(config=OmegaConf.to_container(cfg, resolve=True),
             **cfg.wandb)
 
+    print(f'Train input shape: {train_ds[0][0][0].shape}')
     model = mb.build_model(cfg.model,
                            input_shape=train_ds[0][0][0].shape,
                            num_classes=3)
@@ -60,7 +61,7 @@ def run_train(cfg, save_model=False):
         )
 
         callbacks.append(early_stop)
-
+    
     hist = model.fit(train_ds, epochs=cfg.mode.epochs,
                      validation_data=val_ds,
                      callbacks=callbacks)

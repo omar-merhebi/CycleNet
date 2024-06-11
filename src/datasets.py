@@ -79,7 +79,7 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
         lab = tf.stack(batch_labels)
         log_imgs = tf.stack(log_imgs)
 
-        self.log_imgs = log_imgs[:, :, :5]
+        # self.log_imgs = log_imgs[:, :, :5]
 
         return X, lab
 
@@ -208,8 +208,13 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
         vals = tf.boolean_mask(masked_image, masked_image != 0)
 
         # Get mean and stdv
-        mean = tf.math.reduce_mean(vals)
-        stddev = tf.math.reduce_std(vals)
+        try:
+            mean = tf.math.reduce_mean(vals)
+            stddev = tf.math.reduce_std(vals)
+            
+        except:
+            mean = 0
+            stddev = 0
 
         return mean, stddev
 

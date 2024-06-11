@@ -12,8 +12,6 @@ def _preprocess_wayne_rpe(raw_labels: str,
                           raw_images: str,
                           data_dir: str,
                           labels: str,
-                          channel_annot: str,
-                          channels: str,
                           dynamic_crop: bool = False, **kwargs) -> None:
     """
     Preprocessing for wayne rpe dataset
@@ -21,7 +19,6 @@ def _preprocess_wayne_rpe(raw_labels: str,
 
     raw_images = Path(raw_images)
     data_dir = Path(data_dir)
-    channels = Path(channels)
 
     print('Preprocessing Wayne Datset...')
     print(f'Dynamic Crop: {dynamic_crop}')
@@ -135,21 +132,6 @@ def _preprocess_wayne_rpe(raw_labels: str,
 
         else:
             print('Successfully eliminated extra cells from all images.')
-
-    # Get channel config file
-    print('Creating channel config file. Default is to set masks and '
-          'duplicate DNA channels to False.')
-
-    channels_df = pd.read_csv(channel_annot)
-
-    channels_df['utilize'] = True
-
-    channels_df.loc[
-        channels_df['feature'].str.contains('DNA'), 'utilize'] = False
-    channels_df.loc[channels_df['feature'] == 'DNA1', 'utilize'] = True
-    channels_df.loc[55:, 'utilize'] = False
-
-    channels_df.to_csv(str(channels), index=False)
 
     print('Finished preprocessing dataset.')
 

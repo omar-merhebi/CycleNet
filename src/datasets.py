@@ -206,16 +206,13 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
         # Exclude cell and zero values
         masked_image = image * tf.cast(mask, image.dtype)
         vals = tf.boolean_mask(masked_image, masked_image != 0)
+        
+        if tf.size(vals) == 0:
+            return 0.0, 0.0
 
-        # Get mean and stdv
-        try:
-            mean = tf.math.reduce_mean(vals)
-            stddev = tf.math.reduce_std(vals)
+        mean = tf.math.reduce_mean(vals)
+        stddev = tf.math.reduce_std(vals)
             
-        except:
-            mean = 0
-            stddev = 0
-
         return mean, stddev
 
     def on_epoch_end(self):

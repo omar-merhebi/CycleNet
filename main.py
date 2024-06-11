@@ -16,6 +16,8 @@ from src import model_builder as mb
 from src import datasets as d
 from src.processing import preprocess
 
+import pprint
+
 PROJECT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 TODAY = datetime.now()
 CONF_NAME = None
@@ -27,12 +29,10 @@ def main():
     OmegaConf.set_struct(cfg, False)
     cfg_dict = OmegaConf.to_container(cfg, resolve=True)
 
-    if len(sys.argv) > 1 and 'sweep' in sys.argv[1]:
-        sweep_id = sys.argv[2]
-        wb.init(project=cfg.wandb.project, config=sweep_id)
+    if 'WANDB_RUN_ID' in os.environ:
+        wb.init()
         sweep_cfg = wb.config
-        cfg = update_cfg(cfg, sweep_cfg)
-
+        update_config(cfg, sweep_cfg)
         tr.run_train(cfg, save_model=False)
 
     else:
@@ -47,16 +47,13 @@ def main():
             tr.run_train(cfg, save_model=True)
 
 
-def update_cfg(cfg, sweep_cfg):
-
-    for k, v in sweep_cfg.items():
-        if isinstance(v, dict):
-            cfg[k] = update_cfg[cfg.get(k, {}), v]
-
-        else:
-            cfg[k] = v
-
-        return cfg
+def update_config(original, new_params):
+    for param, new_val, in new_params.items():
+        keys = param.split('.')
+        current = original
+        for key in keys[:-1]:
+            current = current.setdefault(key, {})
+        current[keys[-1]] = new_val
 
 
 if __name__ == '__main__':

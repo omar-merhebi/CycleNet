@@ -12,6 +12,7 @@
 logs/*
 data/*
 wandb/*
+sweeps/*
 extensions.json
 oem.code-workspace
 __pycache__/

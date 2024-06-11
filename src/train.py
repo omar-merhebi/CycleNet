@@ -6,6 +6,7 @@ from datetime import datetime
 from omegaconf import OmegaConf
 import pandas as pd
 from pathlib import Path
+import pprint
 from sklearn.model_selection._split import train_test_split
 from tqdm import tqdm
 
@@ -21,7 +22,10 @@ def run_train(cfg, save_model=False):
 
     train_ds, val_ds, test_ds = _load_datasets(cfg)
 
-    wb.init(config=OmegaConf.to_container(cfg, resolve=True),
+    cfg_dict = OmegaConf.to_container(cfg, resolve=True)
+    pprint.pp(cfg_dict)
+
+    wb.init(config=cfg_dict,
             **cfg.wandb)
 
     print(f'Train input shape: {train_ds[0][0][0].shape}')
@@ -61,7 +65,7 @@ def run_train(cfg, save_model=False):
         )
 
         callbacks.append(early_stop)
-    
+
     hist = model.fit(train_ds, epochs=cfg.mode.epochs,
                      validation_data=val_ds,
                      callbacks=callbacks)
@@ -92,7 +96,6 @@ def _load_datasets(cfg):
 
     cfg_dict = OmegaConf.to_container(cfg, resolve=True)
 
-    # //TODO: training function
     splits = [cfg_dict['dataset']['args'][ds]['split'] for ds in
               cfg_dict['dataset']['args']]
 

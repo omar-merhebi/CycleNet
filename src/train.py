@@ -41,7 +41,7 @@ def run_train(cfg, save_model=False):
 
     if save_model:
         model_save_path = cfg.model_save_path
-        model_save_path = Path(model_save_path) / cfg.wandb.run_name / DATE
+        model_save_path = Path(model_save_path) / cfg.wandb.name / DATE
         model_save_path.mkdir(exist_ok=True, parents=True)
         model_save_path = model_save_path / f'best_model_{TIME}.keras'
         print(f'Saving model to:\t{model_save_path}')

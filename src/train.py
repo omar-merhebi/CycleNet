@@ -18,6 +18,17 @@ DATE = NOW.strftime('%Y-%m-%d')
 TIME = NOW.strftime('%H-%M-%S')
 
 
+class WandbMetricsLogger(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        wb.log({
+            'epoch': epoch,
+            'train_loss': logs.get('loss'),
+            'train_acc': logs.get('categorical_accuracy'),
+            'val_loss': logs.get('val_loss'),
+            'val_accuracy': logs.get('val_categorical_accuracy')})
+
+
 def run_train(cfg, save_model=False):
 
     train_ds, val_ds, test_ds = _load_datasets(cfg)
@@ -41,7 +52,7 @@ def run_train(cfg, save_model=False):
 
     model.summary()
 
-    callbacks = [wb.keras.WandbMetricsLogger()]
+    callbacks = [WandbMetricsLogger()]
 
     if save_model:
         model_save_path = cfg.model_save_path

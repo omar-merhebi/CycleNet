@@ -91,8 +91,8 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
         inv_mask = tf.cast(tf.not_equal(image[:, :, 59], 0), dtype=tf.float32)
         inv_mask = 1 - inv_mask
 
-        stats = [self._extracellular_stats(image[:, :, slc], inv_mask)
-                 for slc in range(image.shape[-1])]
+        # stats = [self._extracellular_stats(image[:, :, slc], inv_mask)
+        #          for slc in range(image.shape[-1])]
 
         if self.augment:
             image = self._augment(image)

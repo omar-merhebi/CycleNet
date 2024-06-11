@@ -24,18 +24,19 @@ CONF_NAME = None
 
 
 def main():
-    hydra.initialize(config_path='conf/', version_base='1.1')
-    cfg = hydra.compose('config')
-    OmegaConf.set_struct(cfg, False)
-    cfg_dict = OmegaConf.to_container(cfg, resolve=True)
-
     if 'WANDB_RUN_ID' in os.environ:
         wb.init()
+        sweep_id = wb.run.sweep_id
+        cfg = OmegaConf.load(PROJECT_PATH / 'tmp' / f'{sweep_id}.yaml')
         sweep_cfg = wb.config
         update_config(cfg, sweep_cfg)
         tr.run_train(cfg, save_model=False)
 
     else:
+        hydra.initialize(config_path='conf/', version_base='1.1')
+        cfg = hydra.compose('config')
+        OmegaConf.set_struct(cfg, False)
+        cfg_dict = OmegaConf.to_container(cfg, resolve=True)
         if cfg.dataset.preprocess:
             preprocess(dataset_name=cfg.dataset.name,
                        **cfg_dict['dataset'])

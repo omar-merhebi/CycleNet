@@ -9,6 +9,7 @@
 *.sh
 *.json
 *.wandb
+tmp/*
 logs/*
 data/*
 wandb/*

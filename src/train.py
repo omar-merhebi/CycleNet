@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import time
 import wandb as wb
 
 from datetime import datetime
@@ -83,6 +84,8 @@ def run_train(cfg, save_model=False):
 
     history = hist.history
 
+    print('Waiting 30s before ending...')
+    time.sleep(30)
     wb.finish()
 
 

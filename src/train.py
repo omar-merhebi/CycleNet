@@ -72,18 +72,6 @@ def run_train(cfg, save_model=False):
 
     history = hist.history
 
-    print('\nTraining done.')
-
-    best_epoch = history['val_loss'].index(min(hist['val_loss']))
-
-    print(f'Best Epoch:\t{best_epoch}')
-    print(f'Best Val Loss:\t{round(history["val_loss"][best_epoch], 3)}')
-
-    metric_names = cfg.mode.metric_names
-    for m, metric in enumerate(cfg.mode.metrics):
-        print(f'Best {metric_names[m]}:\t'
-              f'{round(history[f"val_{metric}"][best_epoch], 3)}')
-
     wb.finish()
 
 

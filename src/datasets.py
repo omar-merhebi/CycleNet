@@ -1,6 +1,4 @@
-import cv2
 import numpy as np
-import logging
 import pandas as pd
 import tensorflow as tf
 
@@ -13,6 +11,7 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
     def __init__(self, data_idx, shuffle, balance, batch_size,
                  data_dir, labels, channels, augment, mask, fill,
                  log_image, **kwargs):
+
         self.data_idx = data_idx
         self.shuffle = shuffle
         self.balance = balance
@@ -35,7 +34,7 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
 
             elif self.balance.lower() == 'up':
                 sample_to = val_counts['G1']
-                
+
             else:
                 sample_to = val_counts['G2']
 
@@ -68,9 +67,6 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
     def __getitem__(self, idx):
         idx = self.indexes[idx * self.batch_size:(idx + 1) * self.batch_size]
 
-        if len(idx) == 0:
-            return None, None, None
-
         batch_imgs = [self._load_img(i) for i in idx]
 
         log_imgs = [img[-1] for img in batch_imgs]
@@ -83,7 +79,9 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
         lab = tf.stack(batch_labels)
         log_imgs = tf.stack(log_imgs)
 
-        return X, lab, log_imgs
+        self.log_imgs = log_imgs[:, :, :5]
+
+        return X, lab
 
     def _load_img(self, idx):
         filepath = self.labels['filepath'].iloc[idx]

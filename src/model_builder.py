@@ -12,6 +12,14 @@ OPTIMIZERS = {
     'sgd': tf.keras.optimizers.SGD,
 }
 
+LOSSES = {
+    'categorical_crossentropy': tf.keras.losses.CategoricalCrossentropy
+}
+
+METRICS = {
+    'categorical_accuracy': tf.keras.metrics.CategoricalAccuracy
+}
+
 
 def build_model(cfg: DictConfig, **kwargs) -> tf.keras.Model:
     """
@@ -149,3 +157,11 @@ def _get_pool_partial(pool_type: str = "avg", **kwargs):
 
 def _get_optimizer(optimizer_name, **kwargs):
     return OPTIMIZERS.get(optimizer_name)(**kwargs)
+
+
+def _get_loss(loss_name, **kwargs):
+    return LOSSES.get(loss_name)(**kwargs)
+
+
+def _get_metric(metric_name, **kwargs):
+    return METRICS.get(metric_name)(**kwargs)

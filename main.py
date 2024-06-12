@@ -15,7 +15,6 @@ from src import helpers as h
 from src import train as tr
 from src import model_builder as mb
 from src import datasets as d
-from src.processing import preprocess
 
 import pprint
 
@@ -30,23 +29,25 @@ def main():
     config = Path(args.config).stem
 
     hydra.initialize(config_path='conf/', version_base='1.1')
-    cfg = hydra.compose(config)
+    config = hydra.compose(config)
 
     if args.mode == 'sweep':
         if args.sweep_config:
-            sweep_id = h.init_sweep(cfg, args.sweep_config)
+            sweep_id = h.init_sweep(config, args.sweep_config)
 
         else:
             sweep_id = args.sweep_id
 
-        sweep_id = f'{cfg.wandb.entity}/{cfg.wandb.project}/{sweep_id}'
+        sweep_id = f'{config.wandb.entity}/{config.wandb.project}/{sweep_id}'
         
         wb.agent(sweep_id,
-                 entity=cfg.wandb.entity,
-                 project=cfg.wandb.project,
+                 entity=config.wandb.entity,
+                 project=config.wandb.project,
                  function=tr.run_sweep,
                  count=1)
-
+        
+    elif args.mode == 'train':
+        tr.train(config)
 
     # if 'WANDB_RUN_ID' in os.environ:
     #     wb.init()

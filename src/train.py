@@ -12,6 +12,7 @@ from sklearn.model_selection._split import train_test_split
 from . import model_builder as mb
 from . import datasets as d
 from . import helpers as h
+from . import processing as pr
 
 NOW = datetime.now()
 DATE = NOW.strftime('%Y-%m-%d')
@@ -44,7 +45,11 @@ def run_sweep():
     # train(config)
 
 
-def train(config, save_model=False):
+def train(config):
+
+    if config.dataset.preprocess:
+        pr.preprocess(dataset_name=config.dataset.name,
+                      **config.dataset)
 
     train_ds, val_ds, test_ds = _load_datasets(config)
 
@@ -69,8 +74,8 @@ def train(config, save_model=False):
 
     callbacks = [WandbMetricsLogger()]
 
-    if save_model:
-        model_save_path = config.model_save_path
+    if config.save.model:
+        model_save_path = config.save.model_path
         model_save_path = Path(model_save_path) / config.wandb.name / DATE
         model_save_path.mkdir(exist_ok=True, parents=True)
         model_save_path = model_save_path / f'best_model_{TIME}.keras'

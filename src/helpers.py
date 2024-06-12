@@ -1,17 +1,12 @@
-import hydra
 import matplotlib.pyplot as plt
-import numpy as np
 import os
-import pandas as pd
 import tensorflow as tf
 import wandb as wb
 
 from datetime import datetime
-from collections.abc import Mapping
 from omegaconf import DictConfig, OmegaConf
 from pathlib import Path
-from PIL import Image
-from typing import Union, Optional
+from typing import Union
 
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
@@ -45,6 +40,12 @@ def init_sweep(config: DictConfig,
 
 
 def update_config(original, new_params):
+    """
+    Updates the main config with args passed by wandb sweep config.
+    Args:
+        original (DictConfig): the original config.
+        new_params (DictConfig): the wandb args to replace in the main config.
+    """
     for param, new_val, in new_params.items():
         keys = param.split('.')
         current = original
@@ -55,20 +56,30 @@ def update_config(original, new_params):
 
 def default_sweep_configs(config):
     """
-    Updates some of the config parameters for sweeps.
+    Updates some of the config parameters to make sure sweeps run smoothly.
     Args:
         config (DictConfig): the original config.
     """
 
     to_change = {
-        "mode": {"early_stopping": False}
-        "save_model"
+        "mode": {"early_stopping": False},
+        "force_gpu": True,
+        "dataset": {"preprocess": False}
     }
-    
+
     update_config(config, to_change)
 
 
 def _freeze_config(config: DictConfig, fname: str):
+    """
+    Freezes the loaded config. Useful when a run may not start immediately
+    when called and we want to be able to change the config in the meantime. 
+    For example: in SLURM environments where the config file won't be loaded
+    until the job has begun. 
+    Args:
+        config (DictConfig): _description_
+        fname (str): _description_
+    """
     save_path = PROJECT_PATH / 'frozen_configs' / f'{fname}.yaml'
     save_path.parent.mkdir(parents=True, exist_ok=True)
 

@@ -34,8 +34,6 @@ parameters:
       - 70
       - 90
       - 150
-  mode.early_stopping.enabled:
-    value: false
   mode.learning_rate:
     distribution: uniform
     max: 0.1
@@ -70,5 +68,3 @@ parameters:
       - false
   save_model:
     value: false
-program: main.py
-project: PHASER

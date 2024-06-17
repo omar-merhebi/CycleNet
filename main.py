@@ -1,22 +1,14 @@
 import argparse
 import hydra
-import numpy as np
 import os
-import pandas as pd
-import sys
-import tensorflow as tf
 import wandb as wb
 
 from datetime import datetime
-from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
 
 from src import helpers as h
 from src import train as tr
-from src import model_builder as mb
-from src import datasets as d
 
-import pprint
 
 PROJECT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 TODAY = datetime.now()
@@ -39,38 +31,16 @@ def main():
             sweep_id = args.sweep_id
 
         sweep_id = f'{config.wandb.entity}/{config.wandb.project}/{sweep_id}'
-        
+
         wb.agent(sweep_id,
                  entity=config.wandb.entity,
                  project=config.wandb.project,
                  function=tr.run_sweep,
                  count=1)
-        
+
     elif args.mode == 'train':
         tr.train(config)
 
-    # if 'WANDB_RUN_ID' in os.environ:
-    #     wb.init()
-    #     sweep_id = wb.run.sweep_id
-    #     cfg = OmegaConf.load(PROJECT_PATH / 'tmp' / f'{sweep_id}.yaml')
-    #     sweep_cfg = wb.config
-    #     update_config(cfg, sweep_cfg)
-    #     tr.run_train(cfg, save_model=False)
-
-    # else:
-    #     hydra.initialize(config_path='conf/', version_base='1.1')
-    #     cfg = hydra.compose('config')
-    #     OmegaConf.set_struct(cfg, False)
-    #     cfg_dict = OmegaConf.to_container(cfg, resolve=True)
-    #     if cfg.dataset.preprocess:
-    #         preprocess(dataset_name=cfg.dataset.name,
-    #                    **cfg_dict['dataset'])
-
-    #     if 'inference' in cfg.mode.name:
-    #         # // TODO: inference
-    #         pass
-    #     elif 'train' in cfg.mode.name:
-    #         tr.run_train(cfg, save_model=True)
 
 def parse_args():
     parser = argparse.ArgumentParser()

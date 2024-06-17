@@ -41,8 +41,7 @@ def run_sweep():
 
     h.update_config(config, sweep_config)
     h.default_sweep_configs(config)
-    print(config)
-    # train(config)
+    train(config)
 
 
 def train(config):
@@ -102,6 +101,7 @@ def train(config):
                      callbacks=callbacks)
 
     history = hist.history
+    print(history)
 
     wb.finish()
 

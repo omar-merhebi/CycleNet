@@ -8,6 +8,8 @@ from omegaconf import DictConfig, OmegaConf
 from pathlib import Path
 from typing import Union
 
+from icecream import ic
+
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 PROJECT_PATH = CURRENT_PATH.parent
@@ -62,11 +64,11 @@ def default_sweep_configs(config):
     """
 
     to_change = {
-        "mode": {"early_stopping": False},
+        "mode.early_stopping": False,
         "force_gpu": True,
-        "dataset": {"preprocess": False}
+        "dataset.preprocess": False
     }
-
+    
     update_config(config, to_change)
 
 

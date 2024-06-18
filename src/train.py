@@ -14,6 +14,8 @@ from . import datasets as d
 from . import helpers as h
 from . import processing as pr
 
+from icecream import ic
+
 NOW = datetime.now()
 DATE = NOW.strftime('%Y-%m-%d')
 TIME = NOW.strftime('%H-%M-%S')
@@ -33,7 +35,7 @@ class WandbMetricsLogger(tf.keras.callbacks.Callback):
 def run_sweep():
     wb.init()
     sweep_id = wb.run.sweep_id
-
+    
     config = OmegaConf.load(
         h.PROJECT_PATH / 'frozen_configs' / f'{sweep_id}.yaml')
 

@@ -40,7 +40,7 @@ def main():
         print(f'    -  {device_name}')
 
     print(f'\nCUDA Version:\t{torch.version.cuda}')
-    print(f'CuDNN Version:\t{torch.backends.cudnn.version()}')
+    print(f'CuDNN Version:\t{torch.backends.cudnn.version()}\n\n')
 
     if args.mode == 'sweep':
         if args.sweep_config:

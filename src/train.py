@@ -129,18 +129,48 @@ def _load_datasets(cfg):
         splits, data_len, cfg.random_seed
     )
 
+    cpus, gpus, total_mem = h.get_resource_allocation()
+    
+    if cpus >= 8:
+        n_workers = (cpus - 2) // 3
+        multiproc = True
+        
+    else:
+        n_workers = 1
+        multiproc = False
+    
     train_ds = d.WayneCroppedDataset(
-        **uni_cfg, **train_cfg, data_idx=train_idx,
-        batch_size=cfg.mode.batch_size)
+        data_idx=train_idx,
+        shuffle=train_cfg.shuffle,
+        balance=train_cfg.balance,
+        data_dir=uni_cfg.data_dir,
+        labels=uni_cfg.labels,
+        channels=uni_cfg.channels,
+        batch_size=cfg.mode.batch_size,
+        workers=n_workers,
+        use_multiprocessing=multiproc)
 
     val_ds = d.WayneCroppedDataset(
-        **uni_cfg, **val_cfg, data_idx=val_idx,
-        batch_size=cfg.mode.batch_size)
+        data_idx=val_idx,
+        shuffle=val_cfg.shuffle,
+        balance=val_cfg.balance,
+        data_dir=uni_cfg.data_dir,
+        labels=uni_cfg.labels,
+        channels=uni_cfg.channels,
+        batch_size=cfg.mode.batch_size,
+        workers=n_workers,
+        use_multiprocessing=multiproc)
 
     test_ds = d.WayneCroppedDataset(
-        **uni_cfg, **test_cfg, data_idx=test_idx,
-        batch_size=cfg.mode.batch_size
-    )
+        data_idx=test_idx,
+        shuffle=test_cfg.shuffle,
+        balance=test_cfg.balance,
+        data_dir=uni_cfg.data_dir,
+        labels=uni_cfg.labels,
+        channels=uni_cfg.channels,
+        batch_size=cfg.mode.batch_size,
+        workers=n_workers,
+        use_multiprocessing=multiproc)
 
     return train_ds, val_ds, test_ds
 

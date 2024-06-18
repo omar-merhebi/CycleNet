@@ -7,21 +7,17 @@ from scipy import ndimage
 from typing import Union, Tuple
 
 
-class WayneCroppedDataset(tf.keras.utils.Sequence):
+# **NOTE TO SELF: parallelism only applies when using model.fit()
+class WayneCroppedDataset(tf.keras.utils.PyDataset):
     def __init__(self, data_idx, shuffle, balance, batch_size,
-                 data_dir, labels, channels, augment, mask, fill,
-                 log_image, **kwargs):
-
+                 data_dir, labels, channels, **kwargs):
+        super().__init__(**kwargs)
         self.data_idx = data_idx
         self.shuffle = shuffle
         self.balance = balance
         self.batch_size = batch_size
         self.data_dir = Path(data_dir)
         self.channels = channels
-        self.augment = augment
-        self.mask = mask
-        self.fill = fill
-        self.log_image = log_image
 
         labels = pd.read_csv(labels)
         labels = labels.loc[data_idx]
@@ -69,17 +65,11 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
 
         batch_imgs = [self._load_img(i) for i in idx]
 
-        log_imgs = [img[-1] for img in batch_imgs]
-        batch_imgs = [img[0] for img in batch_imgs]
-
         batch_labels = [tf.convert_to_tensor(
             self.labels[['G1', 'S', 'G2']].iloc[i].values) for i in idx]
 
         X = tf.stack(batch_imgs)
         lab = tf.stack(batch_labels)
-        log_imgs = tf.stack(log_imgs)
-
-        # self.log_imgs = log_imgs[:, :, :5]
 
         return X, lab
 
@@ -91,44 +81,12 @@ class WayneCroppedDataset(tf.keras.utils.Sequence):
         inv_mask = tf.cast(tf.not_equal(image[:, :, 59], 0), dtype=tf.float32)
         inv_mask = 1 - inv_mask
 
-        # stats = [self._extracellular_stats(image[:, :, slc], inv_mask)
-        #          for slc in range(image.shape[-1])]
-
-        if self.augment:
-            image = self._augment(image)
-
-        if self.mask:
-            if self.mask.lower() == 'nuc':
-                mask_id = 60
-
-            else:
-                mask_id = 62
-
-            mask = image[:, :, mask_id]
-            mask = tf.cast(tf.not_equal(mask, 0), dtype=tf.float32)
-            mask = tf.expand_dims(mask, axis=-1)
-            mask = tf.tile(mask, [1, 1, image.shape[-1]])
-
-            image *= tf.cast(mask, image.dtype)
-
-        if self.fill:
-            filled = []
-            for i in range(image.shape[-1]):
-                slice_2d = image[:, :, i]
-                mean, stddev = stats[i]
-                filled_slice = self._fill_zeros(slice_2d, mean, stddev)
-                filled.append(filled_slice)
-
-            image = tf.stack(filled, axis=-1)
-
-        log_image = image[:, :, self.log_image]
-
         image = tf.gather(image, self.channels, axis=-1)
 
         if len(image.shape) == 2:
             image = tf.expand_dims(image, axis=-1)
 
-        return image, log_image
+        return image
 
     def _fill_zeros(self, image: tf.Tensor,
                     mean: float, stddev: float) -> tf.Tensor:

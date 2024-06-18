@@ -2,7 +2,6 @@ import torch
 import argparse
 import hydra
 import os
-import tensorflow as tf
 import wandb as wb
 
 from datetime import datetime
@@ -25,17 +24,23 @@ def main():
     hydra.initialize(config_path='conf/', version_base='1.1')
     config = hydra.compose(config)
 
-    # Check gpus (also initializes CUDA and CuDNN)
-    n_gpus = torch.cuda.device_count()
+    cpus, gpus, total_mem = h.get_resource_allocation()
 
-    if n_gpus > 0:
-        print(f'Found {n_gpus} GPUs:')
+    print('\n\n---------------------Environment Details---------------------')
+    print(f'CPU Count:\t{cpus}\nGPU Count:\t{gpus}'
+          f'\nTotal Memeory:\t{total_mem} MB')
 
-        for gpu in range(n_gpus):
-            print(torch.cuda.get_device_name(gpu))
+    if gpus == 0 and config.force_gpu:
+        raise RuntimeError('No GPU found and force_gpu is set to True.')
 
-    if config.force_gpu and not tf.test.is_gpu_available():
-        raise RuntimeError('No GPUs found and force gpu is true.')
+    print('\nGPU Details:')
+
+    for gpu in range(gpus):
+        device_name = torch.cuda.get_device_name(gpu)
+        print(f'    -  {device_name}')
+
+    print(f'\nCUDA Version:\t{torch.version.cuda}')
+    print(f'CuDNN Version:\t{torch.backends.cudnn.version()}')
 
     if args.mode == 'sweep':
         if args.sweep_config:

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Union
 
 from icecream import ic
+from pprint import pp
 
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
@@ -121,7 +122,13 @@ def get_resource_allocation():
     gpus = len(gpu_devices)
 
     if is_slurm:
-        cpus = int(os.environ.get('SLURM_CPUS_PER_TASK'))
+        pp(dict(os.environ))
+        try:
+            cpus = int(os.environ.get('SLURM_CPUS_PER_TASK'))
+            
+        except TypeError:
+            cpus = int(os.environ.get('SLURM_CPUS_ON_NODE'))
+        
         mem_per_cpu = os.getenv('SLURM_MEM_PER_CPU')
 
         if mem_per_cpu:

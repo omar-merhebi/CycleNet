@@ -64,9 +64,11 @@ def default_sweep_configs(config):
     """
 
     to_change = {
-        "mode.early_stopping": False,
+        "mode.early_stopping.enabled": False,
         "force_gpu": True,
-        "dataset.preprocess": False
+        "dataset.preprocess": False,
+        "save.model": False,
+        "save.results": False,
     }
     
     update_config(config, to_change)

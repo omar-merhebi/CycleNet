@@ -122,7 +122,6 @@ def get_resource_allocation():
     gpus = len(gpu_devices)
 
     if is_slurm:
-        pp(dict(os.environ))
         try:
             cpus = int(os.environ.get('SLURM_CPUS_PER_TASK'))
             

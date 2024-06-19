@@ -1,7 +1,7 @@
-import torch
 import argparse
 import hydra
 import os
+import tensorflow as tf
 import wandb as wb
 
 from datetime import datetime
@@ -33,14 +33,18 @@ def main():
     if gpus == 0 and config.force_gpu:
         raise RuntimeError('No GPU found and force_gpu is set to True.')
 
-    print('\nGPU Details:')
+    devices = tf.config.list_physical_devices('GPU')
+    if devices:
+        print('\nGPU Details:')
+        for  d, device in enumerate(devices):
+            details = tf.config.experimental.get_device_details(devices[d])
+            name = details.get('device_name', 'Unknown')
+            print(f'    - {name}')
 
-    for gpu in range(gpus):
-        device_name = torch.cuda.get_device_name(gpu)
-        print(f'    -  {device_name}')
-
-    print(f'\nCUDA Version:\t{torch.version.cuda}')
-    print(f'CuDNN Version:\t{torch.backends.cudnn.version()}\n\n')
+    cuda_version = tf.sysconfig.get_build_info()['cuda_version']
+    cudnn_version = tf.sysconfig.get_build_info()['cudnn_version']
+    print(f'\nCUDA Version:\t{cuda_version}')
+    print(f'cuDNN Version:\t{cudnn_version}\n\n')
 
     if args.mode == 'sweep':
         if args.sweep_config:

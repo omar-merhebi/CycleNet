@@ -1,3 +1,4 @@
+import torch
 import matplotlib.pyplot as plt
 import os
 import tensorflow as tf
@@ -71,16 +72,16 @@ def default_sweep_configs(config):
         "save.model": False,
         "save.results": False,
     }
-    
+
     update_config(config, to_change)
 
 
 def _freeze_config(config: DictConfig, fname: str):
     """
     Freezes the loaded config. Useful when a run may not start immediately
-    when called and we want to be able to change the config in the meantime. 
+    when called and we want to be able to change the config in the meantime.
     For example: in SLURM environments where the config file won't be loaded
-    until the job has begun. 
+    until the job has begun.
     Args:
         config (DictConfig): _description_
         fname (str): _description_
@@ -100,7 +101,7 @@ def test_gpu(force_gpu: bool = False) -> None:
         if gpu not available. Defaults to False.
     """
 
-    if not tf.test.is_gpu_available:
+    if not torch.cuda.is_available():
         if force_gpu:
             raise ConfigError(
                 "Execution terminated: failed to detect GPU, but "
@@ -118,16 +119,15 @@ def get_resource_allocation():
         total_mem (int): The total memory available in MB
     """
     is_slurm = _determine_slurm()
-    gpu_devices = tf.config.list_physical_devices('GPU')
-    gpus = len(gpu_devices)
+    gpus = torch.cuda.device_count()
 
     if is_slurm:
         try:
             cpus = int(os.environ.get('SLURM_CPUS_PER_TASK'))
-            
+
         except TypeError:
             cpus = int(os.environ.get('SLURM_CPUS_ON_NODE'))
-        
+
         mem_per_cpu = os.getenv('SLURM_MEM_PER_CPU')
 
         if mem_per_cpu:

@@ -1,16 +1,12 @@
 import torch
 import matplotlib.pyplot as plt
 import os
-import tensorflow as tf
 import wandb as wb
 
 from datetime import datetime
 from omegaconf import DictConfig, OmegaConf
 from pathlib import Path
 from typing import Union
-
-from icecream import ic
-from pprint import pp
 
 
 CURRENT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
@@ -92,7 +88,7 @@ def _freeze_config(config: DictConfig, fname: str):
     OmegaConf.save(config, save_path)
 
 
-def test_gpu(force_gpu: bool = False) -> None:
+def check_cuda(force_gpu: bool = False) -> None:
     """
     Tests whether the gpu is available and logs. Stops execution if
     force_gpu = True but one isn't available.
@@ -108,6 +104,10 @@ def test_gpu(force_gpu: bool = False) -> None:
                 "force_gpu is set to True.")
         else:
             print("Failed to detect GPU. Using CPU instead.")
+
+            return False
+
+    return True
 
 
 def get_resource_allocation():
@@ -142,7 +142,7 @@ def get_resource_allocation():
         cpus = os.cpu_count()
         total_mem = (round(os.sysconf('SC_PAGE_SIZE') *
                            os.sysconf('SC_PHYS_PAGES') /
-                           (1024. ** 3)))
+                           (1024. ** 3)) * 1024)
 
     return cpus, gpus, total_mem
 

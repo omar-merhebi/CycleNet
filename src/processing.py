@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 import tifffile as tiff
 
 from pathlib import Path
@@ -62,30 +61,29 @@ def _preprocess_wayne_rpe(raw_labels: str,
 
         image = normalize_image(image)
 
-        nuc_mask = image[:, :, 57]
-        ring_mask = image[:, :, 58]
-        combined_mask = tf.maximum(nuc_mask, ring_mask)
+        nuc_mask = image[57]
+        ring_mask = image[58]
+        combined_mask = np.maximum(nuc_mask, ring_mask)
 
         masks = [nuc_mask, ring_mask, combined_mask]
         centered_masks = [find_center_mask(mask) for mask in masks]
         masks.extend(centered_masks)
 
-        masks_to_add = tf.cast(tf.stack(masks[2:], axis=-1), tf.float32)
-        image = tf.concat([image, masks_to_add], axis=-1)
+        masks_to_add = np.stack(masks[2:], axis=0).astype(np.float32)
+        image = np.concatenate([image, masks_to_add], axis=0)
 
-        image_np = image.numpy()
         save_path = data_dir / f'{cell_id}.npy'
 
-        np.save(save_path, image_np)
+        np.save(save_path, image)
 
-        ymin, ymax, xmin, xmax = get_min_max_axis(image[:, :, -1])
+        ymin, ymax, xmin, xmax = get_min_max_axis(image[-1])
 
         offset_height = max(ymin - 5, 0)
         offset_width = max(xmin - 5, 0)
 
         max_height = 0
         max_width = 0
-        ymin, ymax, xmin, xmax = get_min_max_axis(image[:, :, -1])
+        ymin, ymax, xmin, xmax = get_min_max_axis(image[-1])
 
         offset_height = max(ymin - 5, 0)
         offset_width = max(xmin - 5, 0)
@@ -111,13 +109,12 @@ def _preprocess_wayne_rpe(raw_labels: str,
             img_path = str(data_dir / f'{cell_id}.npy')
             image = np.load(img_path)
 
-            cropped_image = tf.image.crop_to_bounding_box(
-                image, offset_height, offset_width, hw, hw)
+            cropped_image = image[:, offset_height:offset_height+hw,
+                                  offset_width:offset_width+hw]
 
             np.save(img_path, cropped_image)
 
-            unique_values, _ = tf.unique(
-                tf.reshape(cropped_image[:, :, 59], [-1]))
+            unique_values = np.unique(cropped_image[-4])
 
             if unique_values.shape[0] > 2:
                 multi_cell += 1
@@ -144,45 +141,41 @@ def preprocess(dataset_name: str, **kwargs):
         _preprocess_wayne_rpe(dynamic_crop=True, **kwargs)
 
 
-def normalize_image(image: np.ndarray) -> tf.Tensor:
+def normalize_image(image: np.ndarray) -> np.ndarray:
     """
     Normalize the image so that pixel values are between 0 and 1,
-    and it is of dtype tf.float32.
+    and it is of dtype np.float32.
     Args:
-        image (tf.Tensor): The image to normalize
+        image (np.ndarray): The image to normalize
 
     Returns:
-        tf.Tensor: The normalized image
+        np.ndarray: The normalized image
     """
 
     image = image.astype(np.float32)
 
     image /= 65535.0
 
-    image = np.transpose(image, (1, 2, 0))
-
-    image_tf = tf.convert_to_tensor(image)
-
-    return image_tf
+    return image
 
 
-def find_center_mask(mask: tf.Tensor) -> tf.Tensor:
+def find_center_mask(mask: np.ndarray) -> np.ndarray:
     """
     Find the centermost mask in the image.
     Args:
-        mask (tf.Tensor): mask tensor
+        mask (np.ndarray): mask tensor
 
     Returns:
-        tf.Tensor: new tensor with the centermost mask only
+        np.ndarray: new tensor with the centermost mask only
     """
 
-    assert isinstance(mask, tf.Tensor), (
-        f"Input must be a tf.Tensor, not {type(mask)}")
+    assert isinstance(mask, np.ndarray), (
+        f"Input must be a NumPy array, not {type(mask)}")
 
     if mask.dtype != bool:
-        mask = tf.not_equal(mask, 0.0)
+        mask = np.not_equal(mask, 0.0)
 
-    mask_uint8 = tf.cast(mask, tf.uint8).numpy()
+    mask_uint8 = mask.astype(np.uint8)
 
     num_labels, labels, stats, centroids = (
         cv2.connectedComponentsWithStats(mask_uint8))
@@ -195,29 +188,29 @@ def find_center_mask(mask: tf.Tensor) -> tf.Tensor:
     return center_mask
 
 
-def get_min_max_axis(img: tf.Tensor):
+def get_min_max_axis(img: np.ndarray):
     """
     Finds the extreme points of a binary mask along the x and y axes.
     Args:
-        img (tf.Tensor): the binary mask as a torch.Tensor
+        img (np.ndarray): the binary mask as a torch.Tensor
 
     Returns:
         tuple: tuple of the minimum and maximum values along the x and y axes
                (ymin, ymax, xmin, xmax)
     """
 
-    assert isinstance(img, tf.Tensor), (
-        f"Input must be a tf.Tensor, not {type(img)}")
+    assert isinstance(img, np.ndarray), (
+        f"Input must be a NumPy array, not {type(img)}")
 
-    nonzero = tf.where(tf.not_equal(img, 0))
+    nonzero = np.argwhere(img != 0)
 
-    xidx = tf.unique(nonzero[:, 1]).y
-    yidx = tf.unique(nonzero[:, 0]).y
+    xidx = np.unique(nonzero[:, 1])
+    yidx = np.unique(nonzero[:, 0])
 
-    xmin = tf.reduce_min(xidx).numpy()
-    ymin = tf.reduce_min(yidx).numpy()
+    xmin = np.min(xidx)
+    ymin = np.min(yidx)
 
-    xmax = tf.reduce_max(xidx).numpy()
-    ymax = tf.reduce_max(yidx).numpy()
+    xmax = np.max(xidx)
+    ymax = np.max(yidx)
 
     return ymin, ymax, xmin, xmax

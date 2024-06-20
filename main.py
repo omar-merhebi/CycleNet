@@ -1,7 +1,7 @@
+import torch
 import argparse
 import hydra
 import os
-import tensorflow as tf
 import wandb as wb
 
 from datetime import datetime
@@ -30,19 +30,16 @@ def main():
     print(f'CPU Count:\t{cpus}\nGPU Count:\t{gpus}'
           f'\nTotal Memeory:\t{total_mem} MB')
 
-    if gpus == 0 and config.force_gpu:
-        raise RuntimeError('No GPU found and force_gpu is set to True.')
+    cuda = h.check_cuda()
 
-    devices = tf.config.list_physical_devices('GPU')
-    if devices:
+    if cuda:
         print('\nGPU Details:')
-        for  d, device in enumerate(devices):
-            details = tf.config.experimental.get_device_details(devices[d])
-            name = details.get('device_name', 'Unknown')
+        for g in range(gpus):
+            name = torch.cuda.get_device_name(g)
             print(f'    - {name}')
 
-    cuda_version = tf.sysconfig.get_build_info()['cuda_version']
-    cudnn_version = tf.sysconfig.get_build_info()['cudnn_version']
+    cuda_version = torch.version.cuda
+    cudnn_version = torch.backends.cudnn.version()
     print(f'\nCUDA Version:\t{cuda_version}')
     print(f'cuDNN Version:\t{cudnn_version}\n\n')
 
@@ -62,6 +59,7 @@ def main():
                  count=1)
 
     elif args.mode == 'train':
+        print('Beginning training...')
         tr.train(config)
 
 

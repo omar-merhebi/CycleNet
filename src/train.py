@@ -76,9 +76,6 @@ def setup_training(config):
     train(train_ds, val_ds, model, optim, train_acc_metric, val_acc_metric,
           loss_fn, config.mode.epochs)
 
-    wb.finish()
-
-
 def train(train_data, val_data, model, optim, train_acc_metric, val_acc_metric,
           loss_fn, epochs, log_step=200, val_log_step=50):
 

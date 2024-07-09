@@ -70,6 +70,7 @@ def main():
     elif args.mode == 'train':
         tr.setup_training(config)
 
+    wb.finish()
 
 def parse_args():
     parser = argparse.ArgumentParser()

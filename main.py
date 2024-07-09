@@ -1,7 +1,7 @@
+import tensorflow as tf
 import argparse
 import hydra
 import os
-import tensorflow as tf
 import wandb as wb
 
 from datetime import datetime
@@ -40,11 +40,17 @@ def main():
             details = tf.config.experimental.get_device_details(devices[d])
             name = details.get('device_name', 'Unknown')
             print(f'    - {name}')
+            
+            # set memory growth
+            tf.config.experimental.set_memory_growth(device, True)
 
     cuda_version = tf.sysconfig.get_build_info()['cuda_version']
     cudnn_version = tf.sysconfig.get_build_info()['cudnn_version']
     print(f'\nCUDA Version:\t{cuda_version}')
     print(f'cuDNN Version:\t{cudnn_version}\n\n')
+    print('Checking ability to use matrix multiplication...')
+    result = simple_op()
+    print(f'Result of matrix multiplication:\n{result}\n\n')
 
     if args.mode == 'sweep':
         if args.sweep_config:
@@ -97,6 +103,13 @@ def parse_args():
                      'running sweeps.')
 
     return args
+
+@tf.function
+def simple_op():
+    with tf.device('/GPU:0'):
+        a = tf.constant([[1.0, 2.0], [3.0, 4.0]])
+        b = tf.constant([[1.0, 1.0], [0.0, 1.0]])
+        return tf.matmul(a, b)
 
 
 if __name__ == '__main__':

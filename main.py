@@ -36,11 +36,11 @@ def main():
     devices = tf.config.list_physical_devices('GPU')
     if devices:
         print('\nGPU Details:')
-        for  d, device in enumerate(devices):
+        for d, device in enumerate(devices):
             details = tf.config.experimental.get_device_details(devices[d])
             name = details.get('device_name', 'Unknown')
             print(f'    - {name}')
-            
+
             # set memory growth
             tf.config.experimental.set_memory_growth(device, True)
 
@@ -103,6 +103,7 @@ def parse_args():
                      'running sweeps.')
 
     return args
+
 
 @tf.function
 def simple_op():

@@ -68,7 +68,7 @@ def main():
                  count=1)
 
     elif args.mode == 'train':
-        tr.train(config)
+        tr.setup_training(config)
 
 
 def parse_args():

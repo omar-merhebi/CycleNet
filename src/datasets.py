@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
+from math import ceil
 from pathlib import Path
 from scipy import ndimage
 from typing import Union, Tuple
@@ -58,10 +59,12 @@ class WayneCroppedDataset(tf.keras.utils.PyDataset):
         self.on_epoch_end()
 
     def __len__(self):
-        return int(np.ceil(len(self.indexes) / self.batch_size))
+        return int(ceil(len(self.indexes) / self.batch_size))
 
     def __getitem__(self, idx):
-        idx = self.indexes[idx * self.batch_size:(idx + 1) * self.batch_size]
+        start = idx * self.batch_size
+        end = min((idx + 1) * self.batch_size, len(self.indexes))  # Ensures end does not exceed number of examples
+        idx = self.indexes[start:end]
 
         batch_imgs = [self._load_img(i) for i in idx]
 

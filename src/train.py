@@ -159,6 +159,7 @@ def _check_zero_dim_layers(model):
 
         else:
             if 0 in layer.input.shape:
+                print(f'Layer {layer} has zero dim. Aborting...')
                 return True
 
     return False

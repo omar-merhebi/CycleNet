@@ -82,7 +82,8 @@ def build_model(cfg: DictConfig,
                                            **layers[layer])(x)
 
         except Exception as e:
-            raise Exception(f'Error creating layer: {layer}, {e}')
+            print(f'Error creating layer: {layer}, {e}')
+            return None
 
     class_out = Dense(num_classes,
                       activation='softmax',

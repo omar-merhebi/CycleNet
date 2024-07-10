@@ -65,9 +65,6 @@ def setup_training(config):
                            input_shape=train_ds[0][0][0].shape,
                            num_classes=3)
 
-    print('Model Summary:')
-    print(model.summary())
-
     optim = mb._get_optimizer(config.mode.optimizer,
                               **config.mode.optimizer_args)
     loss_fn = mb._get_loss(config.mode.loss)
@@ -75,7 +72,9 @@ def setup_training(config):
     train_acc_metric = mb._get_metric(config.mode.metrics)
     val_acc_metric = mb._get_metric(config.mode.metrics)
 
-    if not _check_zero_dim_layers(model):
+    if model and not _check_zero_dim_layers(model):
+        print('Model Summary:')
+        print(model.summary())
         train(train_ds, val_ds, model, optim, train_acc_metric, val_acc_metric,
               loss_fn, config.mode.epochs)
 

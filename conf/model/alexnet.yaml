@@ -1,0 +1,20 @@
+name: alexnet
+
+add_regressor: false
+
+architecture: alexnet
+
+# layers excludes input and output layers
+layers: ['conv2d', 'maxpooling2d', 'conv2d', 'maxpooling2d', 'conv2d', 'conv2d', 'conv2d', 'maxpooling2d', 'flatten', 'dense', 'dense']
+
+filters: [96, 256, 384, 384, 256]        # Filter size for each of the 5 conv layers
+conv_kernels: [5, 3, 3, 3, 3]
+conv_pads: ['valid', 'same', 'same', 'same', 'same']
+conv_strides: [2, 1, 1, 1, 1]
+activation: relu
+pool_sizes: [3, 3, 3]
+pool_pads: ['valid', 'valid', 'valid']
+pool_strides: [2, 2, 2]
+dense_neurons: [4096, 4096]
+dropouts: [0.5, 0.5]
+initializer: 'he_normal'

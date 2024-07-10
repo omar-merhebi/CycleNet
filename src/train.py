@@ -64,7 +64,7 @@ def setup_training(config):
     model = mb.build_model(config.model,
                            input_shape=train_ds[0][0][0].shape,
                            num_classes=3)
-    
+
     print('Model Summary:')
     print(model.summary())
 
@@ -75,8 +75,9 @@ def setup_training(config):
     train_acc_metric = mb._get_metric(config.mode.metrics)
     val_acc_metric = mb._get_metric(config.mode.metrics)
 
-    train(train_ds, val_ds, model, optim, train_acc_metric, val_acc_metric,
-          loss_fn, config.mode.epochs)
+    if not _check_zero_dim_layers(model):
+        train(train_ds, val_ds, model, optim, train_acc_metric, val_acc_metric,
+              loss_fn, config.mode.epochs)
 
 
 def train(train_data, val_data, model, optim, train_acc_metric, val_acc_metric,
@@ -106,7 +107,7 @@ def train(train_data, val_data, model, optim, train_acc_metric, val_acc_metric,
         for step, (x_batch_val, y_batch_val) in enumerate(val_data):
             if x_batch_val.shape[0] == 0:
                 break
-            
+
             val_loss_value = test_step(x_batch_val, y_batch_val,
                                        model, loss_fn, val_acc_metric)
 
@@ -149,6 +150,19 @@ def test_step(x, y, model, loss_fn, val_acc_metric):
     val_acc_metric.update_state(y, val_logits)
 
     return loss_val
+
+
+def _check_zero_dim_layers(model):
+    for layer in model.layers:
+        output_shape = layer.output_shape
+
+        if 0 in output_shape:
+            print(f'Layer {layer} has an output shape with zero'
+                  'dimensions. Aborting...')
+            
+            return True
+
+    return False
 
 
 def _load_datasets(cfg):

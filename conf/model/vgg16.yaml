@@ -6,6 +6,7 @@ architecture:
       kernel_size: 3
       padding: same
       activation: relu
+      kernel_initializer: he_normal
 
     MaxPooling2D:
       pool_size: 2

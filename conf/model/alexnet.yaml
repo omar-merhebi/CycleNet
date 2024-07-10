@@ -1,18 +1,69 @@
 name: alexnet
 
-architecture: alexnet
+architecture: 
+  defaults:
+    Conv2D:
+      kernel_size: 3
+      padding: same
+      activation: relu
+      kernel_initializer: he_normal
+    
+    MaxPooling2D:
+      pool_size: 3
+      strides: 2
+      padding: valid
 
-# layers excludes input and output layers
-layers: ['conv2d', 'maxpooling2d', 'conv2d', 'maxpooling2d', 'conv2d', 'conv2d', 'conv2d', 'maxpooling2d', 'flatten', 'dense', 'dense']
+    Dense:
+      units: 4096
+      activation: relu
 
-filters: [96, 256, 384, 384, 256]        # Filter size for each of the 5 conv layers
-conv_kernels: [5, 3, 3, 3, 3]
-conv_pads: ['valid', 'same', 'same', 'same', 'same']
-conv_strides: [2, 1, 1, 1, 1]
-activation: relu
-pool_sizes: [3, 3, 3]
-pool_pads: ['valid', 'valid', 'valid']
-pool_strides: [2, 2, 2]
-dense_neurons: [4096, 4096]
-dropouts: [0.5, 0.5]
-initializer: 'he_normal'
+    Dropout:
+      rate: 0.5
+
+  layers:
+    Conv0:
+      type: Conv2D
+      filters: 96
+      kernel_size: 5
+      padding: valid
+
+    MaxPool1:
+      type: MaxPooling2D
+
+    Conv1:
+      type: Conv2D
+      filters: 256
+
+    MaxPool2:
+      type: MaxPooling2D
+
+    Conv2:
+      type: Conv2D
+      filters: 384
+
+    Conv3:
+      type: Conv2D
+      filters: 384
+
+    Conv4:
+      type: Conv2D
+      filters: 384
+
+    MaxPool3:
+      type: MaxPooling2D
+
+    Flatten:
+      type: Flatten
+
+    Dense1:
+      type: Dense
+
+    Dropout1:
+      type: Dropout
+
+    Dense2:
+      type: Dense
+
+    Dropout2:
+      type: Dropout
+  

@@ -154,12 +154,20 @@ def test_step(x, y, model, loss_fn, val_acc_metric):
 
 def _check_zero_dim_layers(model):
     for layer in model.layers:
-        output_shape = layer.output_shape
+        if isinstance(layer, tf.keras.layers.InputLayer):
+            continue
+
+        else:
+            try:
+                output_shape = layer.compute_output_shape(layer.input_shape)
+
+            except AttributeError:
+                output_shape = layer.output_shape
 
         if 0 in output_shape:
             print(f'Layer {layer} has an output shape with zero'
                   'dimensions. Aborting...')
-            
+
             return True
 
     return False

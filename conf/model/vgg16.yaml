@@ -1,4 +1,4 @@
-name: vgg19
+name: vgg16
 
 architecture:
   defaults:

@@ -1,0 +1,94 @@
+name: vgg19
+
+architecture:
+  defaults:
+    Conv2D:
+      kernel_size: 3
+      padding: same
+      activation: relu
+
+    MaxPooling2D:
+      pool_size: 2
+      strides: 2
+
+    Dense:
+      units: 4096
+      activation: relu
+
+  # layers excludes input and output layers
+  layers:
+    Conv0:
+      type: Conv2D
+      filters: 64
+
+    Conv1:
+      type: Conv2D
+      filters: 64
+
+    Maxpool1:
+      type: MaxPooling2D
+    
+    Conv2:
+      type: Conv2D
+      filters: 128
+    
+    Conv3:
+      type: Conv2D
+      filters: 128
+
+    Maxpool2:
+      type: MaxPooling2D
+
+    Conv4:
+      type: Conv2D
+      filters: 256
+    
+    Conv5:
+      type: Conv2D
+      filters: 256
+
+    Conv6:
+      type: Conv2D
+      filters: 256
+
+    Maxpool3:
+      type: MaxPooling2D
+
+    Conv7:
+      type: Conv2D
+      filters: 512
+
+    Conv8:
+      type: Conv2D
+      filters: 512
+
+    Conv9:
+      type: Conv2D
+      filters: 512
+
+    Maxpool4:
+      type: MaxPooling2D
+
+    Conv10:
+      type: Conv2D
+      filters: 512
+
+    Conv11:
+      type: Conv2D
+      filters: 512
+
+    Conv12:
+      type: Conv2D
+      filters: 512
+
+    Maxpool5:
+      type: MaxPooling2D
+
+    Flatten:
+      type: Flatten
+
+    Dense1: 
+      type: Dense
+
+    Dense2:
+      type: Dense

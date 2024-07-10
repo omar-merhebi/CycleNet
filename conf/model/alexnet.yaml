@@ -1,7 +1,5 @@
 name: alexnet
 
-add_regressor: false
-
 architecture: alexnet
 
 # layers excludes input and output layers

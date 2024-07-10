@@ -158,17 +158,8 @@ def _check_zero_dim_layers(model):
             continue
 
         else:
-            try:
-                output_shape = layer.compute_output_shape(layer.input_shape)
-
-            except AttributeError:
-                output_shape = layer.output_shape
-
-        if 0 in output_shape:
-            print(f'Layer {layer} has an output shape with zero'
-                  'dimensions. Aborting...')
-
-            return True
+            if 0 in layer.input.shape:
+                return True
 
     return False
 

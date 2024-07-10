@@ -15,6 +15,9 @@ architecture:
       units: 4096
       activation: relu
 
+    Dropout:
+      rate: 0.5
+
   # layers excludes input and output layers
   layers:
     Conv0:
@@ -90,5 +93,11 @@ architecture:
     Dense1: 
       type: Dense
 
+    Dropout1:
+      type: Dropout
+
     Dense2:
       type: Dense
+
+    Dropout2:
+      type: Dropout

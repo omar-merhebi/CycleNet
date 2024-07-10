@@ -65,7 +65,7 @@ def setup_training(config):
                            input_shape=train_ds[0][0][0].shape,
                            num_classes=3)
     
-    print(f'Model Summary:')
+    print('Model Summary:')
     print(model.summary())
 
     optim = mb._get_optimizer(config.mode.optimizer,

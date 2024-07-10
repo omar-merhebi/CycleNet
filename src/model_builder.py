@@ -28,6 +28,7 @@ LAYERS = {
     'averagepooling2d': AveragePooling2D,
     'dense': Dense,
     'flatten': Flatten,
+    'dropout': Dropout,
 }
 
 

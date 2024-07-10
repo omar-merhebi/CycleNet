@@ -71,6 +71,7 @@ def main():
 
     wb.finish()
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--mode',

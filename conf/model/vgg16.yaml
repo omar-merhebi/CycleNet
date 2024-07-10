@@ -1,10 +1,11 @@
-name: vgg19
+name: vgg16
 
 architecture:
   defaults:
     Conv2D:
       kernel_size: 3
       padding: same
+      strides: 1
       activation: relu
       kernel_initializer: he_normal
 
@@ -15,6 +16,7 @@ architecture:
     Dense:
       units: 4096
       activation: relu
+      kernel_initializer: he_normal
 
     Dropout:
       rate: 0.5

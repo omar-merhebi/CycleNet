@@ -61,10 +61,12 @@ def setup_training(config):
     wb.init(config=cfg_dict,
             **config.wandb)
 
-    print(f'Train input shape: {train_ds[0][0][0].shape}')
     model = mb.build_model(config.model,
                            input_shape=train_ds[0][0][0].shape,
                            num_classes=3)
+    
+    print('Model Summary:')
+    print(model.summary())
 
     optim = mb._get_optimizer(config.mode.optimizer,
                               **config.mode.optimizer_args)
@@ -75,6 +77,7 @@ def setup_training(config):
 
     train(train_ds, val_ds, model, optim, train_acc_metric, val_acc_metric,
           loss_fn, config.mode.epochs)
+
 
 def train(train_data, val_data, model, optim, train_acc_metric, val_acc_metric,
           loss_fn, epochs, log_step=200, val_log_step=50):

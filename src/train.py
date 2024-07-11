@@ -77,7 +77,7 @@ def setup_training(config):
         print(model.summary())
         train(train_ds, val_ds, model, optim, train_acc_metric, val_acc_metric,
               loss_fn, config.mode.epochs)
-        
+
     else:
         wb.log({'epoch': 1,
                 'loss': 2,
@@ -192,7 +192,17 @@ def _load_datasets(cfg):
         splits, data_len, cfg.random_seed
     )
 
+    # Check for data leakage
+    inter_tr_va = set(train_idx).intersection(set(val_idx))
+    inter_tr_ts = set(train_idx).intersection(set(test_idx))
+    inter_va_ts = set(val_idx).intersection(set(test_idx))
+
+    all_inter = inter_tr_va.union(inter_tr_ts).union(inter_va_ts)
+
     cpus, gpus, total_mem = h.get_resource_allocation()
+
+    if all_inter:
+        print(f'WARNING: Data leakage has been found, indices: {all_inter}')
 
     if cpus >= 8:
         n_workers = (cpus - 2) // 3

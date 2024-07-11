@@ -1,6 +1,6 @@
 defaults:
   - dataset: wayne_crop
-  - model: rotation_net
+  - model: alexnet
   - mode: train
   - _self_
 

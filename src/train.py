@@ -80,9 +80,9 @@ def setup_training(config):
 
     else:
         wb.log({'epoch': 1,
-                'loss': 2,
+                'loss': 1.1,
                 'accuracy': 0,
-                'val_loss': 2,
+                'val_loss': 1.1,
                 'val_accuracy': 0})
 
 

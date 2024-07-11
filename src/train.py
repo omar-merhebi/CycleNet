@@ -77,6 +77,13 @@ def setup_training(config):
         print(model.summary())
         train(train_ds, val_ds, model, optim, train_acc_metric, val_acc_metric,
               loss_fn, config.mode.epochs)
+        
+    else:
+        wb.log({'epoch': 1,
+                'loss': 2,
+                'accuracy': 0,
+                'val_loss': 2,
+                'val_accuracy': 0})
 
 
 def train(train_data, val_data, model, optim, train_acc_metric, val_acc_metric,

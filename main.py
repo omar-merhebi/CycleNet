@@ -5,7 +5,9 @@ import os
 import wandb as wb
 
 from datetime import datetime
+from omegaconf import OmegaConf
 from pathlib import Path
+from pprint import pp
 
 from src import helpers as h
 from src import train as tr
@@ -23,6 +25,9 @@ def main():
 
     hydra.initialize(config_path='conf/', version_base='1.1')
     config = hydra.compose(config)
+    config_dict = OmegaConf.to_container(config, resolve=True)
+
+    wb.init(**config.wandb)
 
     cpus, gpus, total_mem = h.get_resource_allocation()
 

@@ -34,8 +34,6 @@ class WandbMetricsLogger(tf.keras.callbacks.Callback):
 
 
 def run_sweep():
-    # //TODO Move this to main
-    wb.init()
     sweep_id = wb.run.sweep_id
 
     config = OmegaConf.load(
@@ -49,19 +47,14 @@ def run_sweep():
 
 
 def setup_training(config):
+    config_dict = OmegaConf.to_container(config, resolve=True)
+    wb.config.update(config_dict)
 
     if config.dataset.preprocess:
         pr.preprocess(dataset_name=config.dataset.name,
                       **config.dataset)
 
     train_ds, val_ds, test_ds = _load_datasets(config)
-
-    cfg_dict = OmegaConf.to_container(config, resolve=True)
-    pprint.pp(cfg_dict)
-
-    # //TODO: move this to main
-    wb.init(config=cfg_dict,
-            **config.wandb)
 
     model = mb.build_model(config.model,
                            input_shape=train_ds[0][0][0].shape,

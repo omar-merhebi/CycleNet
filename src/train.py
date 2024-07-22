@@ -5,6 +5,7 @@ import tensorflow as tf
 import wandb as wb
 
 from datetime import datetime
+import math
 from omegaconf import OmegaConf
 from pathlib import Path
 from sklearn.model_selection._split import train_test_split
@@ -70,8 +71,8 @@ def setup_training(config):
     if model and not _check_zero_dim_layers(model):
         print('Model Summary:')
         print(model.summary())
-        train(train_ds, val_ds, model, optim, train_acc_metric, val_acc_metric,
-              loss_fn, config.mode.epochs)
+        train(config, train_ds, val_ds, model, optim, train_acc_metric,
+              val_acc_metric, loss_fn, config.mode.epochs)
 
     else:
         wb.log({'epoch': 1,
@@ -81,10 +82,23 @@ def setup_training(config):
                 'val_accuracy': 0})
 
 
-def train(train_data, val_data, model, optim, train_acc_metric, val_acc_metric,
-          loss_fn, epochs, log_step=200, val_log_step=50):
+def train(config, train_data, val_data, model, optim, train_acc_metric,
+          val_acc_metric, loss_fn, epochs):
+
+    early_stopping = config.mode.early_stopping.enabled
+    min_epochs = config.mode.early_stopping.min_epochs
+    epochs_before_stop = config.mode.early_stopping.patience
+    best_val_loss = math.inf
 
     for epoch in range(epochs):
+        ic(epochs_before_stop)
+        ic(epoch)
+
+        if epoch + 1 >= min_epochs and epochs_before_stop <= 0 \
+                and early_stopping:
+            print('Reached stopping patience')
+            break
+
         print(f"\nEpoch {epoch + 1} / {epochs}")
 
         train_loss = []
@@ -124,12 +138,22 @@ def train(train_data, val_data, model, optim, train_acc_metric, val_acc_metric,
         # Reset accuracies
         train_acc_metric.reset_state()
         val_acc_metric.reset_state()
+        
+        m_train_loss = np.mean(train_loss)
+        m_val_loss = np.mean(val_loss)
 
         wb.log({'epoch': epoch + 1,
-                'loss': np.mean(train_loss),
+                'loss': m_train_loss,
                 'accuracy': float(train_acc),
-                'val_loss': np.mean(val_loss),
+                'val_loss': m_val_loss,
                 'val_accuracy': float(val_acc)})
+
+        if m_val_loss < best_val_loss:
+            best_val_loss = m_val_loss
+            epochs_before_stop = config.mode.early_stopping.patience
+
+        else:
+            epochs_before_stop -= 1
 
 
 def train_step(x, y, model, optim, loss_fn, train_acc_metric):

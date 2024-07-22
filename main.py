@@ -65,7 +65,7 @@ def main():
                  entity=config.wandb.entity,
                  project=config.wandb.project,
                  function=tr.run_sweep)
-        
+
     elif args.mode == 'train':
         tr.setup_training(config)
 

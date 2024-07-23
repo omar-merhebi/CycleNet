@@ -138,7 +138,7 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
         # Reset accuracies
         train_acc_metric.reset_state()
         val_acc_metric.reset_state()
-        
+
         m_train_loss = np.mean(train_loss)
         m_val_loss = np.mean(val_loss)
 

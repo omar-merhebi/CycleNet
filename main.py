@@ -3,15 +3,15 @@ import argparse
 import hydra
 import os
 import wandb as wb
+import warnings
 
 from datetime import datetime
-from omegaconf import OmegaConf
 from pathlib import Path
-from pprint import pp
 
 from src import helpers as h
 from src import train as tr
 
+warnings.filterwarnings("ignore")
 
 PROJECT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 TODAY = datetime.now()
@@ -25,7 +25,6 @@ def main():
 
     hydra.initialize(config_path='conf/', version_base='1.1')
     config = hydra.compose(config)
-    config_dict = OmegaConf.to_container(config, resolve=True)
 
     wb.init(**config.wandb)
 

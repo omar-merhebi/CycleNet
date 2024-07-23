@@ -1,13 +1,12 @@
 import numpy as np
 import pandas as pd
-import pprint
 import tensorflow as tf
 import wandb as wb
 
 from datetime import datetime
-import math
 from omegaconf import OmegaConf
 from pathlib import Path
+from pprint import pp
 from sklearn.model_selection._split import train_test_split
 from tqdm import tqdm
 
@@ -69,6 +68,8 @@ def setup_training(config):
     val_acc_metric = mb._get_metric(config.mode.metrics)
 
     if model and not _check_zero_dim_layers(model):
+        print('Run Config:')
+        pp(config_dict)
         print('Model Summary:')
         print(model.summary())
         train(config, train_ds, val_ds, model, optim, train_acc_metric,
@@ -88,12 +89,15 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
     early_stopping = config.mode.early_stopping.enabled
     min_epochs = config.mode.early_stopping.min_epochs
     epochs_before_stop = config.mode.early_stopping.patience
-    best_val_loss = math.inf
+    best_val_loss = np.inf
+
+    model_save_dir = Path(config.model_save_path)
+    model_save_dir /= config.wandb.name
+    model_save_dir /= DATE
+
+    model_save_dir.mkdir(parents=True, exist_ok=True)
 
     for epoch in range(epochs):
-        ic(epochs_before_stop)
-        ic(epoch)
-
         if epoch + 1 >= min_epochs and epochs_before_stop <= 0 \
                 and early_stopping:
             print('Reached stopping patience')
@@ -105,7 +109,6 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
         val_loss = []
 
         # Iterate over batches
-        print(f'Number of batches: {len(train_data)}')
         for step, (x_batch_train, y_batch_train) in tqdm(
                 enumerate(train_data), total=len(train_data)):
 
@@ -151,6 +154,10 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
         if m_val_loss < best_val_loss:
             best_val_loss = m_val_loss
             epochs_before_stop = config.mode.early_stopping.patience
+
+            model_save_path = model_save_dir / \
+                (f'epoch_{epoch}' + f'_vloss_{best_val_loss:.2f}.h5')
+            model.save(model_save_path)
 
         else:
             epochs_before_stop -= 1

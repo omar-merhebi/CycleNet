@@ -15,8 +15,6 @@ from . import datasets as d
 from . import helpers as h
 from . import processing as pr
 
-from icecream import ic
-
 NOW = datetime.now()
 DATE = NOW.strftime('%Y-%m-%d')
 TIME = NOW.strftime('%H-%M-%S')

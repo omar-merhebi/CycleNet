@@ -26,8 +26,6 @@ def main():
     hydra.initialize(config_path='conf/', version_base='1.1')
     config = hydra.compose(config)
 
-    wb.init(**config.wandb)
-
     cpus, gpus, total_mem = h.get_resource_allocation()
 
     print('\n\n---------------------Environment Details---------------------')
@@ -57,6 +55,7 @@ def main():
     print(f'Result of matrix multiplication:\n{result}\n\n')
 
     if args.mode == 'sweep':
+        wb.init(**config.wandb)
         if args.sweep_config:
             sweep_id = h.init_sweep(config, args.sweep_config)
 
@@ -70,10 +69,12 @@ def main():
                  project=config.wandb.project,
                  function=tr.run_sweep)
 
-    elif args.mode == 'train':
-        tr.setup_training(config)
+        wb.finish()
 
-    wb.finish()
+    elif args.mode == 'train':
+        wb.init(**config.wandb)
+        tr.setup_training(config)
+        wb.finish()
 
 
 def parse_args():

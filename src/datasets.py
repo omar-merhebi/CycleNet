@@ -71,10 +71,14 @@ class WayneCroppedDataset(tf.keras.utils.PyDataset):
         batch_labels = [tf.convert_to_tensor(
             self.labels[['G1', 'S', 'G2']].iloc[i].values) for i in idx]
 
+        batch_names = [tf.convert_to_tensor(
+            self.labels['cell_id'].iloc[i]) for i in idx]
+
         X = tf.stack(batch_imgs)
         lab = tf.stack(batch_labels)
+        names = tf.stack(batch_names)
 
-        return X, lab
+        return X, lab, names
 
     def _load_img(self, idx):
         filepath = self.labels['filepath'].iloc[idx]

@@ -107,7 +107,7 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
         val_loss = []
 
         # Iterate over batches
-        for step, (x_batch_train, y_batch_train) in tqdm(
+        for step, (x_batch_train, y_batch_train, cell_label) in tqdm(
                 enumerate(train_data), total=len(train_data)):
 
             # This is needed to ensure the logic does not go past final batch.
@@ -120,7 +120,7 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
 
             train_loss.append(loss_value)
 
-        for step, (x_batch_val, y_batch_val) in enumerate(val_data):
+        for step, (x_batch_val, y_batch_val, cell_label) in enumerate(val_data):
             if x_batch_val.shape[0] == 0:
                 break
 

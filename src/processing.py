@@ -12,7 +12,10 @@ def _preprocess_wayne_rpe(raw_labels: str,
                           raw_images: str,
                           data_dir: str,
                           labels: str,
-                          dynamic_crop: bool = False, **kwargs) -> None:
+                          drop_na: bool = True,
+                          dynamic_crop: bool = False,
+                          crop_size: int = 46,
+                          **kwargs) -> None:
     """
     Preprocessing for wayne rpe dataset
     """
@@ -24,10 +27,14 @@ def _preprocess_wayne_rpe(raw_labels: str,
     print(f'Dynamic Crop: {dynamic_crop}')
     orig_labels = pd.read_csv(raw_labels)
 
-    print(f'Original number of cells in dataset {orig_labels.shape[0]}')
-    labels_proc = orig_labels.dropna()
+    if drop_na:
+        print(f'Original number of cells in dataset {orig_labels.shape[0]}')
+        labels_proc = orig_labels.dropna()
 
-    print(f'Afer dropping NA values: {labels_proc.shape[0]}')
+        print(f'Afer dropping NA values: {labels_proc.shape[0]}')
+
+    else:
+        labels_proc = orig_labels.copy()
 
     # Convert cell id to match image file names
     labels_proc["cell_id"] = (

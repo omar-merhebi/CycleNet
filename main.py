@@ -55,7 +55,6 @@ def main():
     print(f'Result of matrix multiplication:\n{result}\n\n')
 
     if args.mode == 'sweep':
-        wb.init(**config.wandb)
         if args.sweep_config:
             sweep_id = h.init_sweep(config, args.sweep_config)
 

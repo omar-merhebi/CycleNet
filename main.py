@@ -62,6 +62,7 @@ def main():
             sweep_id = args.sweep_id
 
         sweep_id = f'{config.wandb.entity}/{config.wandb.project}/{sweep_id}'
+        print(f'Initialized sweep: {sweep_id}')
 
         wb.agent(sweep_id,
                  entity=config.wandb.entity,

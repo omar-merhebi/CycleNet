@@ -99,6 +99,7 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
         if epoch + 1 >= min_epochs and epochs_before_stop <= 0 \
                 and early_stopping:
             print('Reached stopping patience')
+            wb.summary['best_val_loss'] = best_val_loss
             break
 
         print(f"\nEpoch {epoch + 1} / {epochs}")
@@ -107,7 +108,7 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
         val_loss = []
 
         # Iterate over batches
-        for step, (x_batch_train, y_batch_train, cell_label) in tqdm(
+        for step, (x_batch_train, y_batch_train, cl) in tqdm(
                 enumerate(train_data), total=len(train_data)):
 
             # This is needed to ensure the logic does not go past final batch.
@@ -120,7 +121,7 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
 
             train_loss.append(loss_value)
 
-        for step, (x_batch_val, y_batch_val, cell_label) in enumerate(val_data):
+        for step, (x_batch_val, y_batch_val, cl) in enumerate(val_data):
             if x_batch_val.shape[0] == 0:
                 break
 
@@ -155,7 +156,8 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
 
             model_save_path = model_save_dir / \
                 (f'epoch_{epoch}' + f'_vloss_{best_val_loss:.2f}.h5')
-            model.save(model_save_path)
+            if config.mode.save_model:
+                model.save(model_save_path)
 
         else:
             epochs_before_stop -= 1

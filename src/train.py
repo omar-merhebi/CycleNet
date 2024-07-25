@@ -32,6 +32,8 @@ class WandbMetricsLogger(tf.keras.callbacks.Callback):
 
 
 def run_sweep():
+    wb.init()
+    
     sweep_id = wb.run.sweep_id
 
     config = OmegaConf.load(

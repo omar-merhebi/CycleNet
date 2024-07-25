@@ -26,13 +26,15 @@ class ConfigError(Exception):
 def init_sweep(config: DictConfig,
                sweep_config: Union[str, Path]):
 
-    wb.init(**config.wandb)
     sweep_config = Path(sweep_config)
 
     sweep_config = OmegaConf.load(sweep_config)
     sweep_config = OmegaConf.to_container(sweep_config)
 
     sweep_id = wb.sweep(sweep_config, project=config.wandb.project)
+
+    if sweep_id is None:
+        raise RuntimeError("Sweep ID is none, sweep initialization failed.")
 
     _freeze_config(config, fname=sweep_id)
 

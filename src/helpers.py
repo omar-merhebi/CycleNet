@@ -23,6 +23,19 @@ class ConfigError(Exception):
         super().__init__(self.message)
 
 
+def yes_no(question):
+    reply = str(input(f'{question} (y/n): ')).lower().strip()
+
+    if reply[0] == 'y':
+        return True
+
+    if reply[1] == 'n':
+        return False
+
+    else:
+        return yes_no('Please enter a valid response (y/n)')
+
+
 def init_sweep(config: DictConfig,
                sweep_config: Union[str, Path]):
 

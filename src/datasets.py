@@ -8,7 +8,6 @@ from scipy import ndimage
 from typing import Union, Tuple
 
 
-# **NOTE TO SELF: parallelism only applies when using model.fit()
 class WayneCroppedDataset(tf.keras.utils.PyDataset):
     def __init__(self, data_idx, shuffle, balance, batch_size,
                  data_dir, labels, channels, **kwargs):
@@ -78,7 +77,7 @@ class WayneCroppedDataset(tf.keras.utils.PyDataset):
         lab = tf.stack(batch_labels)
         names = tf.stack(batch_names)
 
-        return X, lab, names
+        return X, lab, (names)  # Datasets should return metadata (such as cell identifier) as a tuple in as last item
 
     def _load_img(self, idx):
         filepath = self.labels['filepath'].iloc[idx]

@@ -14,6 +14,7 @@ from . import model_builder as mb
 from . import datasets as d
 from . import helpers as h
 from . import processing as pr
+from . import inference 
 
 NOW = datetime.now()
 DATE = NOW.strftime('%Y-%m-%d')
@@ -75,13 +76,6 @@ def setup_training(config):
         train(config, train_ds, val_ds, model, optim, train_acc_metric,
               val_acc_metric, loss_fn, config.mode.epochs)
 
-    else:
-        wb.log({'epoch': 1,
-                'loss': 1.1,
-                'accuracy': 0,
-                'val_loss': 1.1,
-                'val_accuracy': 0})
-
 
 def train(config, train_data, val_data, model, optim, train_acc_metric,
           val_acc_metric, loss_fn, epochs):
@@ -95,13 +89,13 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
     model_save_dir /= config.wandb.name
     model_save_dir /= DATE
 
-    model_save_dir.mkdir(parents=True, exist_ok=True)
+    if config.mode.save_model:
+        model_save_dir.mkdir(parents=True, exist_ok=True)
 
     for epoch in range(epochs):
         if epoch + 1 >= min_epochs and epochs_before_stop <= 0 \
                 and early_stopping:
             print('Reached stopping patience')
-            wb.summary['best_val_loss'] = best_val_loss
             break
 
         print(f"\nEpoch {epoch + 1} / {epochs}")
@@ -110,7 +104,7 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
         val_loss = []
 
         # Iterate over batches
-        for step, (x_batch_train, y_batch_train, cl) in tqdm(
+        for step, (x_batch_train, y_batch_train, meta) in tqdm(
                 enumerate(train_data), total=len(train_data)):
 
             # This is needed to ensure the logic does not go past final batch.
@@ -123,12 +117,13 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
 
             train_loss.append(loss_value)
 
-        for step, (x_batch_val, y_batch_val, cl) in enumerate(val_data):
+        for step, (x_batch_val, y_batch_val, meta) in enumerate(val_data):
             if x_batch_val.shape[0] == 0:
                 break
 
-            val_loss_value = test_step(x_batch_val, y_batch_val,
-                                       model, loss_fn, val_acc_metric)
+            val_loss_value = inference.inference_step(x_batch_val, y_batch_val,
+                                                      model, loss_fn, 
+                                                      val_acc_metric)
 
             val_loss.append(val_loss_value)
 
@@ -154,6 +149,8 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
 
         if m_val_loss < best_val_loss:
             best_val_loss = m_val_loss
+            wb.summary['best_val_loss'] = best_val_loss
+
             epochs_before_stop = config.mode.early_stopping.patience
 
             model_save_path = model_save_dir / \
@@ -174,14 +171,6 @@ def train_step(x, y, model, optim, loss_fn, train_acc_metric):
     optim.apply_gradients(zip(grads, model.trainable_weights))
 
     train_acc_metric.update_state(y, logits)
-
-    return loss_val
-
-
-def test_step(x, y, model, loss_fn, val_acc_metric):
-    val_logits = model(x, training=False)
-    loss_val = loss_fn(y, val_logits)
-    val_acc_metric.update_state(y, val_logits)
 
     return loss_val
 

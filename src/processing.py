@@ -1,20 +1,23 @@
 import cv2
 import numpy as np
 import pandas as pd
+import sys
 import tensorflow as tf
 import tifffile as tiff
 
 from pathlib import Path
 from tqdm import tqdm
 
+from . import helpers as h
+
 
 def _preprocess_wayne_rpe(raw_labels: str,
                           raw_images: str,
                           data_dir: str,
                           labels: str,
+                          crop_size: int,
                           drop_na: bool = True,
                           dynamic_crop: bool = False,
-                          crop_size: int = 46,
                           **kwargs) -> None:
     """
     Preprocessing for wayne rpe dataset
@@ -111,6 +114,21 @@ def _preprocess_wayne_rpe(raw_labels: str,
 
         hw = max(max_height, max_width)
 
+        if crop_size:
+            if hw > crop_size:
+                warn = '\n\nWARNING: the max size of the cells in this ' + \
+                    'dataset isgreater than the specified crop size. ' + \
+                    'Crop anyway?\n' + \
+                    f'Necessary Crop Size:\t{hw}x{hw}\n' + \
+                    f'Specified Crop Size:\t{crop_size}x{crop_size}\n'
+
+                cont = h.yes_no(warn)
+
+                if not cont:
+                    sys.exit(1)
+
+            hw = crop_size
+
         print(f'Cropping images to: {hw}x{hw}')
         multi_cell = 0
         for cell_id in tqdm(labels_proc['cell_id'], desc="Processing",
@@ -147,7 +165,7 @@ def preprocess(dataset_name: str, **kwargs):
     if dataset_name.lower() == 'wayne':
         _preprocess_wayne_rpe(**kwargs)
 
-    elif dataset_name.lower() == 'wayne_crop':
+    elif 'wayne_crop' in dataset_name.lower():
         _preprocess_wayne_rpe(dynamic_crop=True, **kwargs)
 
 

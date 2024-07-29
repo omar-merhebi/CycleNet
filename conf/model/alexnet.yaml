@@ -3,29 +3,30 @@ name: alexnet
 architecture: 
   defaults:
     Conv2D:
-      kernel_size: 3
-      strides: 1
+      kernel_size: 5
+      strides: 4
       padding: same
       activation: relu
       kernel_initializer: he_normal
     
     MaxPooling2D:
-      pool_size: 3
+      pool_size: 5
       strides: 2
-      padding: valid
+      padding: same
 
     Dense:
-      units: 4096
+      units: 3271
       activation: relu
+      kernel_initializer: lecun_normal
 
     Dropout:
-      rate: 0.5
+      rate: 0.5070
 
   layers:
     Conv0:
       type: Conv2D
-      filters: 96
-      kernel_size: 5
+      filters: 256
+      kernel_size: 7
       strides: 2
       padding: valid
 
@@ -45,11 +46,11 @@ architecture:
 
     Conv3:
       type: Conv2D
-      filters: 384
+      filters: 256
 
     Conv4:
       type: Conv2D
-      filters: 256
+      filters: 1024
 
     MaxPool3:
       type: MaxPooling2D

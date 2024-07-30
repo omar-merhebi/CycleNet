@@ -52,6 +52,7 @@ class WayneCroppedDataset(tf.keras.utils.PyDataset):
             labels = pd.concat([labels_g1, labels_g2, labels_s])
 
         self.labels = labels
+        self.classes = ['G1', 'S', 'G2']
 
         self.indexes = np.arange(labels.shape[0])
 
@@ -68,7 +69,7 @@ class WayneCroppedDataset(tf.keras.utils.PyDataset):
         batch_imgs = [self._load_img(i) for i in idx]
 
         batch_labels = [tf.convert_to_tensor(
-            self.labels[['G1', 'S', 'G2']].iloc[i].values) for i in idx]
+            self.labels[self.classes].iloc[i].values) for i in idx]
 
         batch_names = [tf.convert_to_tensor(
             self.labels['cell_id'].iloc[i]) for i in idx]

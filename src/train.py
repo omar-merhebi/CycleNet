@@ -16,6 +16,8 @@ from . import helpers as h
 from . import processing as pr
 from . import inference 
 
+from icecream import ic
+
 NOW = datetime.now()
 DATE = NOW.strftime('%Y-%m-%d')
 TIME = NOW.strftime('%H-%M-%S')
@@ -144,7 +146,6 @@ def train(config, train_data, val_data, test_data, model, optim,
         # Reset accuracies
         train_metric.reset_state()
         val_metric.reset_state()
-        test_metric.reset_state()
 
         m_train_loss = np.mean(train_loss)
         m_val_loss = np.mean(val_loss)
@@ -170,18 +171,20 @@ def train(config, train_data, val_data, test_data, model, optim,
             epochs_before_stop -= 1
             
     # Now run on test dataset:
-    colnames = ['sample_id', 'true_label', 'prediction' 'confidence']
+    colnames = ['sample_id', 'true_label', 'prediction', 'confidence']
     results_df = pd.DataFrame(columns=colnames)
     
     for step, (x_batch_test, y_batch_test, meta) in enumerate(test_data):
-        if x_batch_val.shape[0] == 0:
+        if x_batch_test.shape[0] == 0:
             break
-        
-        test_loss_value, partial_results_df = test_step(x_batch_test, 
-                                                        y_batch_test, model,
-                                                        test_data.labels,
-                                                        test_metric, colnames,
-                                                        results_df)
+        test_loss_value, partial_results_df = test_step(x=x_batch_test, 
+                                                        y=y_batch_test, 
+                                                        meta=meta,
+                                                        model=model,
+                                                        class_labels=test_data.classes,
+                                                        metric=test_metric, 
+                                                        loss_fn=loss_fn,
+                                                        df_colnames=colnames)
         
         results_df = pd.concat([results_df, partial_results_df], 
                                ignore_index=True)
@@ -211,12 +214,12 @@ def train(config, train_data, val_data, test_data, model, optim,
 def test_step(x, y, meta, model, class_labels, metric, loss_fn, df_colnames,
               sample_id_key='cell_id'):
     
-    test_logits = model.predict(x)
+    test_logits = model.predict(x, verbose=0)
     loss_val = loss_fn(y, test_logits)
     metric.update_state(y, test_logits)
     
     confidences = np.max(test_logits, axis=-1)
-    predictions = np.argmax(predictions, axis=-1)
+    predictions = np.argmax(test_logits, axis=-1)
     predictions = np.array([class_labels[i] for i in predictions])
     
     true_lab = y.numpy()

@@ -65,6 +65,7 @@ def setup_training(config, finish=True):
                               **config.mode.optimizer_args)
     loss_fn = mb._get_loss(config.mode.loss)
 
+    # // TODO: move all training params to .model
     train_metric = mb._get_metric(config.mode.metrics)
     val_metric = mb._get_metric(config.mode.metrics)
     test_metric = mb._get_metric(config.mode.metrics)

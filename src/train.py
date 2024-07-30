@@ -44,10 +44,10 @@ def run_sweep():
 
     h.update_config(config, sweep_config)
     h.default_sweep_configs(config)
-    setup_training(config)
+    setup_training(config, finish=False)
 
 
-def setup_training(config):
+def setup_training(config, finish=True):
     config_dict = OmegaConf.to_container(config, resolve=True)
     wb.config.update(config_dict)
 
@@ -65,31 +65,36 @@ def setup_training(config):
                               **config.mode.optimizer_args)
     loss_fn = mb._get_loss(config.mode.loss)
 
-    train_acc_metric = mb._get_metric(config.mode.metrics)
-    val_acc_metric = mb._get_metric(config.mode.metrics)
+    train_metric = mb._get_metric(config.mode.metrics)
+    val_metric = mb._get_metric(config.mode.metrics)
+    test_metric = mb._get_metric(config.mode.metrics)
 
     if model and not _check_zero_dim_layers(model):
         print('Run Config:')
         pp(config_dict)
         print('Model Summary:')
         print(model.summary())
-        train(config, train_ds, val_ds, model, optim, train_acc_metric,
-              val_acc_metric, loss_fn, config.mode.epochs)
+        train(config, train_ds, val_ds, test_ds, model, optim, 
+              train_metric, val_metric, test_metric, 
+              loss_fn, config.mode.epochs)
+        
+    if finish:
+        wb.finish()
 
 
-def train(config, train_data, val_data, model, optim, train_acc_metric,
-          val_acc_metric, loss_fn, epochs):
+def train(config, train_data, val_data, test_data, model, optim, 
+          train_metric, val_metric, test_metric,
+          loss_fn, epochs):
 
     early_stopping = config.mode.early_stopping.enabled
     min_epochs = config.mode.early_stopping.min_epochs
     epochs_before_stop = config.mode.early_stopping.patience
     best_val_loss = np.inf
 
-    model_save_dir = Path(config.model_save_path)
-    model_save_dir /= config.wandb.name
-    model_save_dir /= DATE
-
-    if config.mode.save_model:
+    if config.mode.save_model.enabled:
+        model_save_dir = Path(config.mode.save_model.path)
+        model_save_dir /= config.wandb.name
+        model_save_dir /= DATE
         model_save_dir.mkdir(parents=True, exist_ok=True)
 
     for epoch in range(epochs):
@@ -102,7 +107,8 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
 
         train_loss = []
         val_loss = []
-
+        test_loss = []
+        
         # Iterate over batches
         for step, (x_batch_train, y_batch_train, meta) in tqdm(
                 enumerate(train_data), total=len(train_data)):
@@ -113,7 +119,7 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
                 break
 
             loss_value = train_step(x_batch_train, y_batch_train,
-                                    model, optim, loss_fn, train_acc_metric)
+                                    model, optim, loss_fn, train_metric)
 
             train_loss.append(loss_value)
 
@@ -121,22 +127,23 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
             if x_batch_val.shape[0] == 0:
                 break
 
-            val_loss_value = inference.inference_step(x_batch_val, y_batch_val,
-                                                      model, loss_fn, 
-                                                      val_acc_metric)
+            val_loss_value = val_step(x_batch_val, y_batch_val,
+                                      model, loss_fn, 
+                                      val_metric)
 
             val_loss.append(val_loss_value)
 
         # Display metrics
-        train_acc = train_acc_metric.result()
+        train_acc = train_metric.result()
         print(f"Training accuracy over epoch: {float(train_acc):.4f}")
 
-        val_acc = val_acc_metric.result()
+        val_acc = val_metric.result()
         print(f'Validation accuracy after epoch: {float(val_acc):.4f}')
 
         # Reset accuracies
-        train_acc_metric.reset_state()
-        val_acc_metric.reset_state()
+        train_metric.reset_state()
+        val_metric.reset_state()
+        test_metric.reset_state()
 
         m_train_loss = np.mean(train_loss)
         m_val_loss = np.mean(val_loss)
@@ -155,25 +162,93 @@ def train(config, train_data, val_data, model, optim, train_acc_metric,
 
             model_save_path = model_save_dir / \
                 (f'epoch_{epoch}' + f'_vloss_{best_val_loss:.2f}.h5')
-            if config.mode.save_model:
+            if config.mode.save_model.enabled:
                 model.save(model_save_path)
 
         else:
             epochs_before_stop -= 1
+            
+    # Now run on test dataset:
+    colnames = ['sample_id', 'true_label', 'prediction' 'confidence']
+    results_df = pd.DataFrame(columns=colnames)
+    
+    for step, (x_batch_test, y_batch_test, meta) in enumerate(test_data):
+        if x_batch_val.shape[0] == 0:
+            break
+        
+        test_loss_value, partial_results_df = test_step(x_batch_test, 
+                                                        y_batch_test, model,
+                                                        test_data.labels,
+                                                        test_metric, colnames,
+                                                        results_df)
+        
+        results_df = pd.concat([results_df, partial_results_df], 
+                               ignore_index=True)
+        
+        test_loss.append(test_loss_value)
+    
+    m_test_loss = np.mean(test_loss)
+        
+    test_acc = test_metric.result()
+    print(f'Test Accuracy:\t{test_acc}')
+    
+    wb.summary['test_loss'] = m_test_loss
+    wb.summary['test_accuracy'] = float(test_acc)
+    
+    if config.mode.save_test_results.enabled:
+        save_results = Path(config.mode.save_test_results.path)
+        save_results /= config.wandb.name
+        save_results /= DATE
+        
+        save_results.mkdir(parents=True, exist_ok=True)
+        
+        save_results /= 'test_data_results.csv'
+        
+        results_df.to_csv(save_results)
+        
+
+def test_step(x, y, meta, model, class_labels, metric, loss_fn, df_colnames,
+              sample_id_key='cell_id'):
+    
+    test_logits = model.predict(x)
+    loss_val = loss_fn(y, test_logits)
+    metric.update_state(y, test_logits)
+    
+    confidences = np.max(test_logits, axis=-1)
+    predictions = np.argmax(predictions, axis=-1)
+    predictions = np.array([class_labels[i] for i in predictions])
+    
+    true_lab = y.numpy()
+    true_lab = np.argmax(true_lab, axis=-1)
+    true_lab = np.array([class_labels[i] for i in true_lab])
+    
+    ids = meta[sample_id_key]
+    
+    stacked = np.vstack([ids, true_lab, predictions, confidences])
+    
+    temp_df = pd.DataFrame(stacked.T, columns=df_colnames)
+    
+    return loss_val, temp_df
 
 
-def train_step(x, y, model, optim, loss_fn, train_acc_metric):
+def train_step(x, y, model, optim, loss_fn, metric):
     with tf.GradientTape() as tape:
-        logits = model(x, training=True)
-        loss_val = loss_fn(y, logits)
+        train_logits = model(x, training=True)
+        loss_val = loss_fn(y, train_logits)
 
     grads = tape.gradient(loss_val, model.trainable_weights)
     optim.apply_gradients(zip(grads, model.trainable_weights))
 
-    train_acc_metric.update_state(y, logits)
+    metric.update_state(y, train_logits)
 
     return loss_val
 
+def val_step(x, y, model, loss_fn, metric):
+    val_logits = model(x, training=False)
+    loss_val = loss_fn(y, val_logits)
+    metric.update_state(y, val_logits)
+
+    return loss_val
 
 def _check_zero_dim_layers(model):
     for layer in model.layers:
@@ -258,7 +333,7 @@ def _load_datasets(cfg):
         data_dir=uni_cfg.data_dir,
         labels=uni_cfg.labels,
         channels=uni_cfg.channels,
-        batch_size=cfg.mode.batch_size,
+        batch_size=1,
         workers=n_workers,
         use_multiprocessing=multiproc)
 

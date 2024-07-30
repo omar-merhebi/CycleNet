@@ -54,6 +54,7 @@ def main():
     result = simple_op()
     print(f'Result of matrix multiplication:\n{result}\n\n')
 
+    # // TODO: Add inference option
     if args.mode == 'sweep':
         if args.sweep_config:
             sweep_id = h.init_sweep(config, args.sweep_config)

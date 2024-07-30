@@ -76,9 +76,11 @@ class WayneCroppedDataset(tf.keras.utils.PyDataset):
         X = tf.stack(batch_imgs)
         lab = tf.stack(batch_labels)
         names = tf.stack(batch_names)
+        
+        meta = {'cell_id': names}
 
-        return X, lab, (names)  # Datasets should return metadata (such as cell identifier) as a tuple in as last item
-
+        return X, lab, meta  # Datasets should return metadata (such as cell identifier) as a dict in last item
+    
     def _load_img(self, idx):
         filepath = self.labels['filepath'].iloc[idx]
         image = np.load(filepath)

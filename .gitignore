@@ -14,6 +14,8 @@ logs/*
 data/*
 wandb/*
 sweeps/*
+saved_models/*
+results/*
 frozen_configs/*
 extensions.json
 oem.code-workspace

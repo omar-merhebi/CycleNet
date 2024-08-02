@@ -166,6 +166,10 @@ def preprocess(dataset_name: str, **kwargs):
         _preprocess_wayne_rpe(**kwargs)
 
     elif 'wayne_crop' in dataset_name.lower():
+        if 'inference' in dataset_name.lower():
+            kwargs['labels'] = kwargs['data_csv']
+            kwargs['drop_na'] = False
+
         _preprocess_wayne_rpe(dynamic_crop=True, **kwargs)
 
 

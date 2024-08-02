@@ -70,9 +70,13 @@ class WayneCroppedDataset(tf.keras.utils.PyDataset):
 
         batch_imgs = [self._load_img(i) for i in idx]
 
-        batch_labels = [tf.convert_to_tensor(
-            self.labels[self.classes].iloc[i].values) for i in idx]
+        try:
+            batch_labels = [tf.convert_to_tensor(
+                self.labels[self.classes].iloc[i].values) for i in idx]
 
+        except KeyError:
+            batch_labels = [tf.convert_to_tensor([0, 0, 0]) for i in idx]
+            
         batch_names = [tf.convert_to_tensor(
             self.labels['cell_id'].iloc[i]) for i in idx]
 

@@ -4,8 +4,10 @@ import tensorflow as tf
 
 from datetime import datetime
 from pathlib import Path
+from tqdm import tqdm
 
 from . import datasets as d
+from . import processing as pr
 
 NOW = datetime.now()
 DATE = NOW.strftime('%Y-%m-%d')
@@ -14,6 +16,10 @@ TIME = NOW.strftime('%H-%M-%S')
 
 # // TODO: Finish inference logic
 def run_inference(config):
+    if config.dataset.preprocess:
+        pr.preprocess(dataset_name=config.dataset.name,
+                      **config.dataset)
+
     dataset = _load_dataset(config)
 
     model = Path(config.mode.model)
@@ -22,23 +28,29 @@ def run_inference(config):
     results = inference(dataset, model)
 
     savepath = Path(config.mode.results)
+    
+    savepath.parent.mkdir(exist_ok=True, parents=True)
 
     results.to_csv(savepath)
 
 
 def inference(inference_data, model, cell_id_key='cell_id'):
     colnames = ['id', 'prediction', 'confidence']
-    labels = inference_data.labels
+    classes = inference_data.classes
 
     results_df = pd.DataFrame(columns=colnames)
 
-    for s, step in enumerate(inference_data):
+    for s, step in tqdm(enumerate(inference_data),
+                        total=len(inference_data)):
+        if step[0].shape[0] == 0:
+            break
+
         ids = step[-1][cell_id_key].numpy()
 
         raw_predictions = model.predict(step[0], verbose=0)
         confidences = np.max(raw_predictions, axis=-1)
         predictions = np.argmax(raw_predictions, axis=-1)
-        predictions = np.array([labels[i] for i in predictions])
+        predictions = np.array([classes[i] for i in predictions])
 
         to_stack = [ids, predictions, confidences]
 

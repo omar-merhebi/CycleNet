@@ -9,18 +9,20 @@ from typing import Union, Tuple
 
 
 class WayneCroppedDataset(tf.keras.utils.PyDataset):
-    def __init__(self, data_idx, shuffle, balance, batch_size,
-                 data_dir, labels, channels, **kwargs):
+    def __init__(self, shuffle, balance, batch_size,
+                 data_dir, labels, channels, data_idx=None, **kwargs):
         super().__init__(**kwargs)
-        self.data_idx = data_idx
         self.shuffle = shuffle
         self.balance = balance
         self.batch_size = batch_size
         self.data_dir = Path(data_dir)
         self.channels = channels
+        self.data_idx = data_idx
 
         labels = pd.read_csv(labels)
-        labels = labels.loc[data_idx]
+
+        if self.data_idx:
+            labels = labels.loc[data_idx]
 
         if self.balance:
             val_counts = labels['pred_phase'].value_counts()
@@ -77,11 +79,11 @@ class WayneCroppedDataset(tf.keras.utils.PyDataset):
         X = tf.stack(batch_imgs)
         lab = tf.stack(batch_labels)
         names = tf.stack(batch_names)
-        
+
         meta = {'cell_id': names}
 
         return X, lab, meta  # Datasets should return metadata (such as cell identifier) as a dict in last item
-    
+
     def _load_img(self, idx):
         filepath = self.labels['filepath'].iloc[idx]
         image = np.load(filepath)

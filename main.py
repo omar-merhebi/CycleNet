@@ -10,6 +10,7 @@ from pathlib import Path
 
 from src import helpers as h
 from src import train as tr
+from src import inference as inf
 
 warnings.filterwarnings("ignore")
 
@@ -76,6 +77,9 @@ def main():
         wb.init(**config.wandb)
         tr.setup_training(config)
         wb.finish()
+        
+    elif args.mode == 'inference':
+        results = inf.inference(config)
 
 
 def parse_args():

@@ -14,9 +14,6 @@ from . import model_builder as mb
 from . import datasets as d
 from . import helpers as h
 from . import processing as pr
-from . import inference 
-
-from icecream import ic
 
 NOW = datetime.now()
 DATE = NOW.strftime('%Y-%m-%d')
@@ -77,15 +74,15 @@ def setup_training(config, finish=True):
         pp(config_dict)
         print('Model Summary:')
         print(model.summary())
-        train(config, train_ds, val_ds, test_ds, model, optim, 
-              train_metric, val_metric, test_metric, 
+        train(config, train_ds, val_ds, test_ds, model, optim,
+              train_metric, val_metric, test_metric,
               loss_fn, config.mode.epochs)
-        
+
     if finish:
         wb.finish()
 
 
-def train(config, train_data, val_data, test_data, model, optim, 
+def train(config, train_data, val_data, test_data, model, optim,
           train_metric, val_metric, test_metric,
           loss_fn, epochs):
 
@@ -111,7 +108,7 @@ def train(config, train_data, val_data, test_data, model, optim,
         train_loss = []
         val_loss = []
         test_loss = []
-        
+
         # Iterate over batches
         for step, (x_batch_train, y_batch_train, meta) in tqdm(
                 enumerate(train_data), total=len(train_data)):
@@ -131,7 +128,7 @@ def train(config, train_data, val_data, test_data, model, optim,
                 break
 
             val_loss_value = val_step(x_batch_val, y_batch_val,
-                                      model, loss_fn, 
+                                      model, loss_fn,
                                       val_metric)
 
             val_loss.append(val_loss_value)
@@ -169,69 +166,69 @@ def train(config, train_data, val_data, test_data, model, optim,
 
         else:
             epochs_before_stop -= 1
-            
+
     # Now run on test dataset:
     colnames = ['sample_id', 'true_label', 'prediction', 'confidence']
     results_df = pd.DataFrame(columns=colnames)
-    
+
     for step, (x_batch_test, y_batch_test, meta) in enumerate(test_data):
         if x_batch_test.shape[0] == 0:
             break
-        test_loss_value, partial_results_df = test_step(x=x_batch_test, 
-                                                        y=y_batch_test, 
+        test_loss_value, partial_results_df = test_step(x=x_batch_test,
+                                                        y=y_batch_test,
                                                         meta=meta,
                                                         model=model,
                                                         class_labels=test_data.classes,
-                                                        metric=test_metric, 
+                                                        metric=test_metric,
                                                         loss_fn=loss_fn,
                                                         df_colnames=colnames)
-        
-        results_df = pd.concat([results_df, partial_results_df], 
+
+        results_df = pd.concat([results_df, partial_results_df],
                                ignore_index=True)
-        
+
         test_loss.append(test_loss_value)
-    
+
     m_test_loss = np.mean(test_loss)
-        
+
     test_acc = test_metric.result()
     print(f'Test Accuracy:\t{test_acc}')
-    
+
     wb.summary['test_loss'] = m_test_loss
     wb.summary['test_accuracy'] = float(test_acc)
-    
+
     if config.mode.save_test_results.enabled:
         save_results = Path(config.mode.save_test_results.path)
         save_results /= config.wandb.name
         save_results /= DATE
-        
+
         save_results.mkdir(parents=True, exist_ok=True)
-        
+
         save_results /= 'test_data_results.csv'
-        
+
         results_df.to_csv(save_results)
-        
+
 
 def test_step(x, y, meta, model, class_labels, metric, loss_fn, df_colnames,
               sample_id_key='cell_id'):
-    
+
     test_logits = model.predict(x, verbose=0)
     loss_val = loss_fn(y, test_logits)
     metric.update_state(y, test_logits)
-    
+
     confidences = np.max(test_logits, axis=-1)
     predictions = np.argmax(test_logits, axis=-1)
     predictions = np.array([class_labels[i] for i in predictions])
-    
+
     true_lab = y.numpy()
     true_lab = np.argmax(true_lab, axis=-1)
     true_lab = np.array([class_labels[i] for i in true_lab])
-    
+
     ids = meta[sample_id_key]
-    
+
     stacked = np.vstack([ids, true_lab, predictions, confidences])
-    
+
     temp_df = pd.DataFrame(stacked.T, columns=df_colnames)
-    
+
     return loss_val, temp_df
 
 
@@ -247,12 +244,14 @@ def train_step(x, y, model, optim, loss_fn, metric):
 
     return loss_val
 
+
 def val_step(x, y, model, loss_fn, metric):
     val_logits = model(x, training=False)
     loss_val = loss_fn(y, val_logits)
     metric.update_state(y, val_logits)
 
     return loss_val
+
 
 def _check_zero_dim_layers(model):
     for layer in model.layers:

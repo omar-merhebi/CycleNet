@@ -1,7 +1,8 @@
 name: inference
 
-batch_size: 24
+batch_size: 1
 metric: categorical_accuracy
 metric_name: Categorical Accuracy
 
 model: /work/users/o/e/oem/PHASER/saved_models/alexnet_corrected_labels_royal/2024-07-29/epoch_11_vloss_0.10.h5
+results: /work/users/o/e/oem/PHASER/saved_models/results/inference/unlabeled_inference.csv

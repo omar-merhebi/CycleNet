@@ -79,7 +79,7 @@ def main():
         wb.finish()
         
     elif args.mode == 'inference':
-        results = inf.inference(config)
+        inf.run_inference(config)
 
 
 def parse_args():

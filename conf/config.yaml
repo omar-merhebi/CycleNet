@@ -1,17 +1,18 @@
 defaults:
-  - dataset: wayne_crop
-  - model: alexnet
-  - mode: train
+  - dataset: wayne_crop_inference_rem
+  - model: alexnet_royal
+  - mode: inference
   - _self_
 
 random_seed: 416
 force_gpu: true  # Will stop the program if GPU not detected
 
-model_save_path: saved_models/
-results_save_path: results/
-
 wandb:
   project: PHASER
   group: ${model.name}_${dataset.name}
-  name: cropped_dataset
+  name: alexnet_incl_test_set
   entity: oem
+  tags:
+    - ${model.name}
+    - ${dataset.name}
+    - ${mode.name}

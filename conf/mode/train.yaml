@@ -1,22 +1,28 @@
 name: train
 
-test_data_out: data/phaser_rpe/results  # Where to save test data
-
 # Training parameters
-epochs: 10
-batch_size: 10
+epochs: 15
+batch_size: 24
 loss: 'categorical_crossentropy'        # standard tf loss or custom loss
-metrics: ['categorical_accuracy']
-metric_names: ['Categorical Accuracy']  # len must match metrics
+metrics: 'categorical_accuracy'
+metric_names: 'Categorical Accuracy'  # len must match metrics
 
 optimizer: 'adam'
 optimizer_args:
-  learning_rate: 0.001
-  beta_1: 0.9
-  beta_2: 0.999
-  epsilon: 1e-7
+  learning_rate: 0.01383809597087758
+  beta_1: 0.9489838374721248
+  beta_2: 0.9958173159550412
+  epsilon: 0.061056
 
 early_stopping:
   enabled: true
-  monitor: val_loss
   patience: 3
+  min_epochs: 3
+
+save_model:
+  enabled: true
+  path: /work/users/o/e/oem/PHASER/saved_models/
+
+save_test_results:
+  enabled: true 
+  path: /work/users/o/e/oem/PHASER/results/

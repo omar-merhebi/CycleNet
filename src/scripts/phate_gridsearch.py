@@ -43,16 +43,19 @@ def main():
     FEATURES_DF = pd.read_csv(FEATURES)
     
     CELLS_DF.rename(columns={CELLS_DF.columns[0]: 'cell_id'}, inplace=True)
-    CELLS_DF.set_index('cell_id')
     CELLS_DF.sort_index(inplace=True)
-    CELLS_DF.dropna(subset='pred_phase', inplace=True)
+    CELLS_DF.drop('pred_phase', axis=1, inplace=True)
+    
+    CELL_PREDICTIONS_DF.dropna(axis=0, subset='pred_phase', inplace=True)
+    CELLS_DF = pd.merge(CELL_PREDICTIONS_DF, CELLS_DF, how='left', on='cell_id')
+    CELLS_DF.set_index('cell_id', inplace=True)
     
     encoder = preprocessing.LabelEncoder()
-    
-    CELLS_DF['encoded_phase'] = encoder.fit_transform(CELLS_DF['pred_phase'])
-    print('PHASE Encodings:')
-    print(CELLS_DF.groupby(['encoded_phase','pred_phase']).size().reset_index().rename(columns={0:'count'}))
 
+    CELLS_DF['pred_phase_encoded'] = encoder.fit_transform(CELLS_DF['pred_phase'])
+    print('PHASE Encodings:')
+    print(CELLS_DF.groupby(['pred_phase_encoded','pred_phase']).size().reset_index().rename(columns={0:'count'}))
+    
     wb.agent(sweep_id,
              project=project,
              entity=ENTITY,
@@ -76,18 +79,19 @@ def phate_sweep():
     # Cells with necessary features
     CELLS_FEATS = CELLS_DF[list(FEATURES_SUBSET['Row.names'])]
     
-    if config.z_score:
+    if config['z_score']:
         CELLS_FEATS = CELLS_FEATS.apply(zscore)
         
     phate_operator = phate.PHATE(knn=config['knn'],
                                  t=config['t'],
                                  gamma=config['gamma'],
-                                 n_components=3)
+                                 n_components=3,
+                                 random_state=416)
 
     CELLS_PHATE = phate_operator.fit_transform(CELLS_FEATS)
-    LABELS = CELLS_DF['encoded_phase'].to_numpy()
-    # Calculate DBCV
+    LABELS = CELLS_DF['pred_phase_encoded'].to_numpy()
     
+    # Calculate DBCV
     try:
         score_dbcv = dbcv.dbcv(CELLS_PHATE, LABELS, n_processes=4)
         print(f'DBCV Score: {score_dbcv}')

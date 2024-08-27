@@ -36,20 +36,30 @@ def yes_no(question):
         return yes_no('Please enter a valid response (y/n)')
 
 
-def init_sweep(config: DictConfig,
-               sweep_config: Union[str, Path]):
+def init_sweep(sweep_config: Union[str, Path],
+               project: str = None,
+               config: DictConfig = None):
 
     sweep_config = Path(sweep_config)
 
     sweep_config = OmegaConf.load(sweep_config)
     sweep_config = OmegaConf.to_container(sweep_config)
 
-    sweep_id = wb.sweep(sweep_config, project=config.wandb.project)
+    if not project:
+        try:
+            project = config.wandb.project
+            
+        except:
+            raise RuntimeError('Must provide a project ID or a config file with the parameter wandb.project')
+        
+    sweep_id = wb.sweep(sweep_config, project=project)
+
+    if config:
+        _freeze_config(config, fname=sweep_id)
 
     if sweep_id is None:
         raise RuntimeError("Sweep ID is none, sweep initialization failed.")
 
-    _freeze_config(config, fname=sweep_id)
 
     return sweep_id
 

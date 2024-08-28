@@ -1,0 +1,20 @@
+wandb_version: 1
+
+cell_phase_preds:
+  value: /media/omar/1354B7D111621BC0/projects/unc/wayne_rpe/data/labels_original.csv
+cells_df:
+  value: /media/omar/1354B7D111621BC0/projects/unc/wayne_rpe/data/full_df.csv
+features:
+  value: /media/omar/1354B7D111621BC0/projects/unc/wayne_rpe/data/feature_df_v6_noIntgStdOver.csv
+gamma:
+  value: 0.8125223321748523
+knn:
+  value: 184
+n_features:
+  value: 213
+rank_by:
+  value: rank_tot
+t:
+  value: 5
+z_score:
+  value: true
